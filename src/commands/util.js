@@ -10,7 +10,7 @@ export function buildProfileEmbed(profile, game, { title }) {
     .addFields(
       { name: 'Trainer', value: profile.displayName, inline: true },
       { name: 'Slimes Collected', value: String(profile.oozu.length), inline: true },
-      { name: 'Goo Orbs', value: String(profile.currency), inline: true }
+      { name: 'Oozorbs', value: String(profile.currency), inline: true }
     );
 
   if (profile.oozu.length > 0) {

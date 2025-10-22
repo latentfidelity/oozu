@@ -57,7 +57,7 @@ export class PlayerProfile {
   asPublicDict(game) {
     return {
       trainer: this.displayName,
-      gooOrbs: this.currency,
+      oozorbs: this.currency,
       oozu: this.oozu.map((creature) => {
         const species = game.getSpecies(creature.speciesId);
         return {

@@ -10,6 +10,7 @@ import {
 import { randomUUID } from 'crypto';
 
 import { createSpriteAttachment } from '../utils/sprites.js';
+import { buildProfileEmbed } from './util.js';
 
 const SMALL_ICON_WIDTH = 64;
 const MAX_TEAM_DISPLAY = 6;
@@ -128,27 +129,24 @@ export const teamCommand = {
 };
 
 export async function buildTeamSummary(profile, game) {
+  const profileEmbed = buildProfileEmbed(profile, game, { title: 'Team Profile' })
+    .setColor(0x4b7bec)
+    .setFooter({ text: 'Oozu prototype build 0.1.0' });
+
   if (!profile.oozu.length) {
-    const emptyEmbed = new EmbedBuilder()
-      .setTitle(`${profile.displayName}'s Squad`)
+    profileEmbed
       .setDescription('No Oozu yet—use `/register` to receive your starter.')
-      .setColor(0x5865f2)
-      .setFooter({ text: 'Oozu prototype build 0.1.0' });
-    return { embeds: [emptyEmbed], files: [] };
+      .setColor(0x5865f2);
+    return {
+      content: `${profile.displayName} • Oozorbs: ${profile.currency}`,
+      embeds: [profileEmbed],
+      files: [],
+      components: []
+    };
   }
 
   const attachments = [];
-  const summaryEmbed = new EmbedBuilder()
-    .setTitle(`${profile.displayName}'s Squad`)
-    .setDescription(
-      profile.oozu.length > MAX_TEAM_DISPLAY
-        ? `Showing the first ${MAX_TEAM_DISPLAY} Oozu (out of ${profile.oozu.length}).`
-        : `Showing all ${profile.oozu.length} Oozu in your squad.`
-    )
-    .setColor(0x5865f2)
-    .setFooter({ text: 'Use the menu below to view full stat sheets.' });
-
-  const embeds = [summaryEmbed];
+  const embeds = [profileEmbed];
   const creatures = profile.oozu.slice(0, MAX_TEAM_DISPLAY);
   const sessionId = randomUUID();
 
@@ -179,6 +177,8 @@ export async function buildTeamSummary(profile, game) {
   const selectMenu = new StringSelectMenuBuilder()
     .setCustomId(`team:select:${profile.userId}`)
     .setPlaceholder('Choose an Oozu to view full stats')
+    .setMinValues(1)
+    .setMaxValues(1)
     .addOptions(
       creatures.map((creature, idx) => {
         const species = game.getSpecies(creature.speciesId);
@@ -191,12 +191,13 @@ export async function buildTeamSummary(profile, game) {
 
   const components = [new ActionRowBuilder().addComponents(selectMenu)];
 
-  return {
-    content: `${profile.displayName} • Goo Orbs: ${profile.currency}`,
+  const response = {
+    content: `${profile.displayName} • Oozorbs: ${profile.currency}`,
     embeds,
     files: attachments,
     components
   };
+  return response;
 }
 
 export async function buildStatSheet(profile, creature, species) {
@@ -234,7 +235,7 @@ export async function buildStatSheet(profile, creature, species) {
         value: `HP ${species.baseHp}\nATK ${species.baseAttack}\nDEF ${species.baseDefense}`,
         inline: true
       },
-      { name: 'Goo Orbs', value: String(profile.currency), inline: true },
+      { name: 'Oozorbs', value: String(profile.currency), inline: true },
       { name: 'Moves', value: movesText, inline: false }
     )
     .setImage(`attachment://${spriteFile}`)
