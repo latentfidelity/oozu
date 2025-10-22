@@ -1,7 +1,7 @@
 [
   {
     "template_id": "water_oozu",
-    "name": "Water Oozu",
+    "name": "Droplet Oozu",
     "element": "Water",
     "tier": "Oozu",
     "sprite": "sprites/oozu/water_001.png",
@@ -24,8 +24,8 @@
   },
   {
     "template_id": "fire_oozu",
-    "name": "Fire Oozu",
-    "element": "Fire",
+    "name": "Flame Oozu",
+    "element": "Heat",
     "tier": "Oozu",
     "sprite": "sprites/oozu/heat_001.png",
     "description": "It radiates embers of warmth.",
@@ -47,7 +47,7 @@
   },
   {
     "template_id": "flora_oozu",
-    "name": "Flora Oozu",
+    "name": "Leaf Oozu",
     "element": "Flora",
     "tier": "Oozu",
     "sprite": "sprites/oozu/flora_001.png",
@@ -70,8 +70,8 @@
   },
   {
     "template_id": "cold_oozu",
-    "name": "Cold Oozu",
-    "element": "Frost",
+    "name": "Icicle Oozu",
+    "element": "Cold",
     "tier": "Oozu",
     "sprite": "sprites/oozu/cold_001.png",
     "description": "It breathes crystalline winter chill.",
@@ -116,8 +116,8 @@
   },
   {
     "template_id": "lightning_oozu",
-    "name": "Lightning Oozu",
-    "element": "Storm",
+    "name": "Bolt Oozu",
+    "element": "Lightning",
     "tier": "Oozu",
     "sprite": "sprites/oozu/lightning_001.png",
     "description": "It crackles with stormy energy.",
@@ -162,7 +162,7 @@
   },
   {
     "template_id": "shadow_oozu",
-    "name": "Shadow Oozu",
+    "name": "Shade Oozu",
     "element": "Shadow",
     "tier": "Oozu",
     "sprite": "sprites/oozu/shadow_001.png",
@@ -185,7 +185,7 @@
   },
   {
     "template_id": "spirit_oozu",
-    "name": "Spirit Oozu",
+    "name": "Ghost Oozu",
     "element": "Spirit",
     "tier": "Oozu",
     "sprite": "sprites/oozu/spirit_001.png",
@@ -231,7 +231,7 @@
   },
   {
     "template_id": "toxic_oozu",
-    "name": "Toxic Oozu",
+    "name": "Poison Oozu",
     "element": "Toxic",
     "tier": "Oozu",
     "sprite": "sprites/oozu/toxic_001.png",
