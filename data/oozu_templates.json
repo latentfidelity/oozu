@@ -1,7 +1,7 @@
 [
   {
     "template_id": "water_oozu",
-    "name": "Droplet Oozu",
+    "name": "Water Oozu",
     "element": "Water",
     "tier": "Oozu",
     "sprite": "sprites/oozu/water_001.png",
@@ -25,7 +25,7 @@
   {
     "template_id": "fire_oozu",
     "name": "Flame Oozu",
-    "element": "Heat",
+    "element": "Flame",
     "tier": "Oozu",
     "sprite": "sprites/oozu/heat_001.png",
     "description": "It radiates embers of warmth.",
@@ -47,7 +47,7 @@
   },
   {
     "template_id": "flora_oozu",
-    "name": "Leaf Oozu",
+    "name": "Flora Oozu",
     "element": "Flora",
     "tier": "Oozu",
     "sprite": "sprites/oozu/flora_001.png",
@@ -70,8 +70,8 @@
   },
   {
     "template_id": "cold_oozu",
-    "name": "Icicle Oozu",
-    "element": "Cold",
+    "name": "Frost Oozu",
+    "element": "Frost",
     "tier": "Oozu",
     "sprite": "sprites/oozu/cold_001.png",
     "description": "It breathes crystalline winter chill.",
@@ -94,7 +94,7 @@
   {
     "template_id": "gear_oozu",
     "name": "Gear Oozu",
-    "element": "Metal",
+    "element": "Gear",
     "tier": "Oozu",
     "sprite": "sprites/oozu/gear_001.png",
     "description": "It hums with mechanical resolve.",
@@ -116,7 +116,7 @@
   },
   {
     "template_id": "lightning_oozu",
-    "name": "Bolt Oozu",
+    "name": "Lightning Oozu",
     "element": "Lightning",
     "tier": "Oozu",
     "sprite": "sprites/oozu/lightning_001.png",
@@ -140,7 +140,7 @@
   {
     "template_id": "mystic_oozu",
     "name": "Mystic Oozu",
-    "element": "Arcane",
+    "element": "Mystic",
     "tier": "Oozu",
     "sprite": "sprites/oozu/mystic_001.png",
     "description": "It shimmers with arcane whispers.",
@@ -162,7 +162,7 @@
   },
   {
     "template_id": "shadow_oozu",
-    "name": "Shade Oozu",
+    "name": "Shadow Oozu",
     "element": "Shadow",
     "tier": "Oozu",
     "sprite": "sprites/oozu/shadow_001.png",
@@ -185,7 +185,7 @@
   },
   {
     "template_id": "spirit_oozu",
-    "name": "Ghost Oozu",
+    "name": "Spirit Oozu",
     "element": "Spirit",
     "tier": "Oozu",
     "sprite": "sprites/oozu/spirit_001.png",
@@ -209,7 +209,7 @@
   {
     "template_id": "terra_oozu",
     "name": "Terra Oozu",
-    "element": "Earth",
+    "element": "Terra",
     "tier": "Oozu",
     "sprite": "sprites/oozu/terra_001.png",
     "description": "It anchors rugged earthen strength.",
@@ -231,7 +231,7 @@
   },
   {
     "template_id": "toxic_oozu",
-    "name": "Poison Oozu",
+    "name": "Toxic Oozu",
     "element": "Toxic",
     "tier": "Oozu",
     "sprite": "sprites/oozu/toxic_001.png",

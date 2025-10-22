@@ -80,7 +80,7 @@ async function buildStarterPrompt({
 
       const templateEmbed = new EmbedBuilder()
         .setTitle(`${NUMBER_EMOJIS[idx + 1] ?? '🔹'} ${template.name}`)
-        .setDescription(`${template.description}\nElement: **${template.element}**`)
+        .setDescription(template.description)
         .setColor(0x32a852)
         .setImage(`attachment://${fileName}`);
       embeds.push(templateEmbed);
