@@ -4,7 +4,7 @@
     "currency": 100,
     "oozu": [
       {
-        "species_id": "water_oozu",
+        "template_id": "water_oozu",
         "nickname": "Water Oozu",
         "level": 1,
         "experience": 0
@@ -16,7 +16,7 @@
     "currency": 100,
     "oozu": [
       {
-        "species_id": "water_oozu",
+        "template_id": "water_oozu",
         "nickname": "Water Oozu",
         "level": 1,
         "experience": 0

@@ -1,6 +1,6 @@
 [
   {
-    "species_id": "water_oozu",
+    "template_id": "water_oozu",
     "name": "Water Oozu",
     "element": "Water",
     "tier": "Oozu",
@@ -23,7 +23,7 @@
     ]
   },
   {
-    "species_id": "fire_oozu",
+    "template_id": "fire_oozu",
     "name": "Fire Oozu",
     "element": "Fire",
     "tier": "Oozu",
@@ -46,7 +46,7 @@
     ]
   },
   {
-    "species_id": "flora_oozu",
+    "template_id": "flora_oozu",
     "name": "Flora Oozu",
     "element": "Flora",
     "tier": "Oozu",
@@ -69,7 +69,7 @@
     ]
   },
   {
-    "species_id": "cold_oozu",
+    "template_id": "cold_oozu",
     "name": "Cold Oozu",
     "element": "Frost",
     "tier": "Oozu",
@@ -92,7 +92,7 @@
     ]
   },
   {
-    "species_id": "gear_oozu",
+    "template_id": "gear_oozu",
     "name": "Gear Oozu",
     "element": "Metal",
     "tier": "Oozu",
@@ -115,7 +115,7 @@
     ]
   },
   {
-    "species_id": "lightning_oozu",
+    "template_id": "lightning_oozu",
     "name": "Lightning Oozu",
     "element": "Storm",
     "tier": "Oozu",
@@ -138,7 +138,7 @@
     ]
   },
   {
-    "species_id": "mystic_oozu",
+    "template_id": "mystic_oozu",
     "name": "Mystic Oozu",
     "element": "Arcane",
     "tier": "Oozu",
@@ -161,7 +161,7 @@
     ]
   },
   {
-    "species_id": "shadow_oozu",
+    "template_id": "shadow_oozu",
     "name": "Shadow Oozu",
     "element": "Shadow",
     "tier": "Oozu",
@@ -184,7 +184,7 @@
     ]
   },
   {
-    "species_id": "spirit_oozu",
+    "template_id": "spirit_oozu",
     "name": "Spirit Oozu",
     "element": "Spirit",
     "tier": "Oozu",
@@ -207,7 +207,7 @@
     ]
   },
   {
-    "species_id": "terra_oozu",
+    "template_id": "terra_oozu",
     "name": "Terra Oozu",
     "element": "Earth",
     "tier": "Oozu",
@@ -230,7 +230,7 @@
     ]
   },
   {
-    "species_id": "toxic_oozu",
+    "template_id": "toxic_oozu",
     "name": "Toxic Oozu",
     "element": "Toxic",
     "tier": "Oozu",

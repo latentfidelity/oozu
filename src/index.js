@@ -18,7 +18,7 @@ async function main() {
   const store = new JsonStore(settings.saveFile);
   const game = new GameService({
     store,
-    speciesFile: settings.speciesFile
+    templateFile: settings.templateFile
   });
   await game.initialize();
 

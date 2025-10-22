@@ -5,7 +5,7 @@ import { AttachmentBuilder } from 'discord.js';
 import sharp from 'sharp';
 
 /**
- * Create a Discord attachment for a species sprite, optionally scaling the image.
+ * Create a Discord attachment for an Oozu sprite, optionally scaling the image.
  *
  * @param {string} spritePath - Relative path to the sprite asset.
  * @param {object} options

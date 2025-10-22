@@ -35,7 +35,7 @@ export class JsonStore {
         entry.oozu?.map(
           (creature) =>
             new PlayerOozu({
-              speciesId: creature.species_id ?? creature.speciesId,
+              templateId: creature.template_id ?? creature.templateId,
               nickname: creature.nickname,
               level: creature.level ?? 1,
               experience: creature.experience ?? 0
@@ -64,7 +64,7 @@ export class JsonStore {
         display_name: profile.displayName,
         currency: profile.currency,
         oozu: profile.oozu.map((creature) => ({
-          species_id: creature.speciesId,
+          template_id: creature.templateId,
           nickname: creature.nickname,
           level: creature.level,
           experience: creature.experience

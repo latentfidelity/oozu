@@ -9,21 +9,9 @@ export function buildProfileEmbed(profile, game, { title }) {
     .setFooter({ text: FOOTER_TEXT })
     .addFields(
       { name: 'Trainer', value: profile.displayName, inline: true },
-      { name: 'Slimes Collected', value: String(profile.oozu.length), inline: true },
+      { name: 'Oozu Collected', value: String(profile.oozu.length), inline: true },
       { name: 'Oozorbs', value: String(profile.currency), inline: true }
     );
-
-  if (profile.oozu.length > 0) {
-    const creatures = profile.oozu
-      .map((creature) => {
-        const species = game.getSpecies(creature.speciesId);
-        const speciesName = species?.name ?? creature.speciesId;
-        return `• **${creature.nickname}** (${speciesName})`;
-      })
-      .join('\n');
-
-    embed.addFields({ name: 'Team', value: creatures, inline: false });
-  }
 
   return embed;
 }

@@ -1,10 +1,10 @@
 import {
   ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   EmbedBuilder,
   MessageFlags,
-  SlashCommandBuilder,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder
+  SlashCommandBuilder
 } from 'discord.js';
 
 import { randomUUID } from 'crypto';
@@ -63,8 +63,8 @@ export const teamCommand = {
   },
 
   async handleComponent(interaction, { game }) {
-    const [commandKey, action, ownerId] = interaction.customId.split(':');
-    if (commandKey !== 'team' || action !== 'select') {
+    const [commandKey, action, ownerId, indexToken] = interaction.customId.split(':');
+    if (commandKey !== 'team' || action !== 'view') {
       return;
     }
 
@@ -85,8 +85,7 @@ export const teamCommand = {
       return;
     }
 
-    const choice = interaction.values?.[0];
-    const index = Number(choice);
+    const index = Number(indexToken);
     if (!Number.isInteger(index) || index < 0 || index >= profile.oozu.length) {
       await interaction.reply({
         content: 'That Oozu is not available.',
@@ -96,10 +95,10 @@ export const teamCommand = {
     }
 
     const creature = profile.oozu[index];
-    const species = game.getSpecies(creature.speciesId);
-    if (!species) {
+    const template = game.getTemplate(creature.templateId);
+    if (!template) {
       await interaction.reply({
-        content: 'Species data missing—try again later.',
+        content: 'Template data missing—try again later.',
         flags: MessageFlags.Ephemeral
       });
       return;
@@ -108,7 +107,7 @@ export const teamCommand = {
     try {
       await interaction.reply({ content: 'Opening stat sheet...', flags: MessageFlags.Ephemeral });
       console.log('[team] component acked', interaction.id, 'choice', index);
-      const response = await buildStatSheet(profile, creature, species);
+      const response = await buildStatSheet(profile, creature, template);
       console.log('[team] component built sheet', interaction.id);
       await interaction.editReply(response);
       console.log('[team] component edited reply', interaction.id);
@@ -151,12 +150,12 @@ export async function buildTeamSummary(profile, game) {
   const sessionId = randomUUID();
 
   for (const [idx, creature] of creatures.entries()) {
-    const species = game.getSpecies(creature.speciesId);
-    if (!species) {
+    const template = game.getTemplate(creature.templateId);
+    if (!template) {
       continue;
     }
 
-    const { attachment, fileName } = await createSpriteAttachment(species.sprite, {
+    const { attachment, fileName } = await createSpriteAttachment(template.sprite, {
       targetWidth: SMALL_ICON_WIDTH,
       variant: `team_${sessionId}_${idx}`
     });
@@ -167,29 +166,29 @@ export async function buildTeamSummary(profile, game) {
         name: `${creature.nickname} • Lv ${creature.level}`,
         iconURL: `attachment://${fileName}`
       })
-      .setDescription(`Element: ${species.element}\nTier: ${species.tier}`)
+      .setDescription(`Element: ${template.element}\nTier: ${template.tier}`)
       .setColor(0x4b7bec)
       .setFooter({ text: 'Select this Oozu to view the full sheet.' });
 
     embeds.push(embed);
   }
 
-  const selectMenu = new StringSelectMenuBuilder()
-    .setCustomId(`team:select:${profile.userId}`)
-    .setPlaceholder('Choose an Oozu to view full stats')
-    .setMinValues(1)
-    .setMaxValues(1)
-    .addOptions(
-      creatures.map((creature, idx) => {
-        const species = game.getSpecies(creature.speciesId);
-        return new StringSelectMenuOptionBuilder()
-          .setLabel(`${creature.nickname} • Lv ${creature.level}`)
-          .setDescription(species ? species.name : creature.speciesId)
-          .setValue(String(idx));
-      })
-    );
+  const buttons = creatures.map((creature, idx) => {
+    const template = game.getTemplate(creature.templateId);
+    const templateName = template?.name;
+    const label =
+      templateName && templateName !== creature.nickname ? `${creature.nickname} (${templateName})` : creature.nickname;
+    return new ButtonBuilder()
+      .setCustomId(`team:view:${profile.userId}:${idx}`)
+      .setLabel(label)
+      .setStyle(ButtonStyle.Secondary);
+  });
 
-  const components = [new ActionRowBuilder().addComponents(selectMenu)];
+  const components = [];
+  for (let i = 0; i < buttons.length; i += 5) {
+    const rowButtons = buttons.slice(i, i + 5);
+    components.push(new ActionRowBuilder().addComponents(rowButtons));
+  }
 
   const response = {
     content: `${profile.displayName} • Oozorbs: ${profile.currency}`,
@@ -200,22 +199,22 @@ export async function buildTeamSummary(profile, game) {
   return response;
 }
 
-export async function buildStatSheet(profile, creature, species) {
+export async function buildStatSheet(profile, creature, template) {
   const sessionId = randomUUID();
 
-  const { attachment: iconAttachment, fileName: iconFile } = await createSpriteAttachment(species.sprite, {
+  const { attachment: iconAttachment, fileName: iconFile } = await createSpriteAttachment(template.sprite, {
     targetWidth: SMALL_ICON_WIDTH,
     variant: `inspect_icon_${sessionId}`
   });
 
-  const { attachment: spriteAttachment, fileName: spriteFile } = await createSpriteAttachment(species.sprite, {
+  const { attachment: spriteAttachment, fileName: spriteFile } = await createSpriteAttachment(template.sprite, {
     scale: 1,
     variant: `inspect_full_${sessionId}`
   });
 
   const movesText =
-    species.moves.length > 0
-      ? species.moves.map((move) => `• **${move.name}** (${move.power}) — ${move.description}`).join('\n')
+    template.moves.length > 0
+      ? template.moves.map((move) => `• **${move.name}** (${move.power}) — ${move.description}`).join('\n')
       : 'No moves recorded.';
 
   const embed = new EmbedBuilder()
@@ -223,16 +222,16 @@ export async function buildStatSheet(profile, creature, species) {
       name: `${creature.nickname} • Lv ${creature.level}`,
       iconURL: `attachment://${iconFile}`
     })
-    .setTitle(`${species.name} Stat Sheet`)
-    .setDescription(species.description)
+    .setTitle(`${template.name} Stat Sheet`)
+    .setDescription(template.description)
     .setColor(0x32a852)
     .addFields(
       { name: 'Trainer', value: profile.displayName, inline: true },
-      { name: 'Element', value: species.element, inline: true },
-      { name: 'Tier', value: species.tier, inline: true },
+      { name: 'Element', value: template.element, inline: true },
+      { name: 'Tier', value: template.tier, inline: true },
       {
         name: 'Base Stats',
-        value: `HP ${species.baseHp}\nATK ${species.baseAttack}\nDEF ${species.baseDefense}`,
+        value: `HP ${template.baseHp}\nATK ${template.baseAttack}\nDEF ${template.baseDefense}`,
         inline: true
       },
       { name: 'Oozorbs', value: String(profile.currency), inline: true },

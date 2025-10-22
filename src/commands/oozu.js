@@ -2,49 +2,49 @@ import { EmbedBuilder, MessageFlags, SlashCommandBuilder } from 'discord.js';
 
 import { createSpriteAttachment } from '../utils/sprites.js';
 
-export const speciesCommand = {
-  name: 'species',
+export const oozuCommand = {
+  name: 'oozu',
   slashData: new SlashCommandBuilder()
-    .setName('species')
-    .setDescription('View the stat sheet for an Oozu species.')
+    .setName('oozu')
+    .setDescription('Inspect an Oozu template.')
     .addStringOption((option) =>
       option
         .setName('query')
-        .setDescription('Species name or ID (e.g. Water Oozu).')
+        .setDescription('Template name or ID (e.g. Water Oozu).')
         .setRequired(true)
         .setAutocomplete(true)
     ),
 
   async handleInteraction(interaction, { game }) {
     const query = interaction.options.getString('query', true);
-    const species = game.findSpecies(query);
-    if (!species) {
+    const template = game.findTemplate(query);
+    if (!template) {
       await interaction.reply({
-        content: `No species found matching \`${query}\`.`,
+        content: `No Oozu template found matching \`${query}\`.`,
         flags: MessageFlags.Ephemeral
       });
       return;
     }
 
     await interaction.deferReply();
-    const response = await buildSpeciesResponse(species);
+    const response = await buildTemplateResponse(template);
     await interaction.editReply(response);
   },
 
   async handleMessage(message, args, { game }) {
     if (args.length === 0) {
-      await message.reply('Usage: !species <species name or id>');
+      await message.reply('Usage: !oozu <template name or id>');
       return;
     }
 
     const query = args.join(' ');
-    const species = game.findSpecies(query);
-    if (!species) {
-      await message.reply(`No species found matching \`${query}\`.`);
+    const template = game.findTemplate(query);
+    if (!template) {
+      await message.reply(`No Oozu template found matching \`${query}\`.`);
       return;
     }
 
-    const response = await buildSpeciesResponse(species);
+    const response = await buildTemplateResponse(template);
     await message.reply(response);
   },
 
@@ -52,52 +52,52 @@ export const speciesCommand = {
     const focused = interaction.options.getFocused(true);
     const search = focused.value.trim().toLowerCase();
     const suggestions = game
-      .listSpecies()
-      .filter((species) => {
+      .listTemplates()
+      .filter((template) => {
         if (!search) {
           return true;
         }
-        const name = species.name.toLowerCase();
-        const id = species.speciesId.toLowerCase();
+        const name = template.name.toLowerCase();
+        const id = template.templateId.toLowerCase();
         return name.includes(search) || id.includes(search);
       })
       .slice(0, 25)
-      .map((species) => ({
-        name: species.name,
-        value: species.speciesId
+      .map((template) => ({
+        name: template.name,
+        value: template.templateId
       }));
 
     await interaction.respond(suggestions);
   }
 };
 
-async function buildSpeciesResponse(species) {
-  const { attachment: iconAttachment, fileName: iconFile } = await createSpriteAttachment(species.sprite, {
+async function buildTemplateResponse(template) {
+  const { attachment: iconAttachment, fileName: iconFile } = await createSpriteAttachment(template.sprite, {
     targetWidth: 64,
-    variant: 'species_icon'
+    variant: 'template_icon'
   });
 
-  const { attachment, fileName } = await createSpriteAttachment(species.sprite, {
+  const { attachment, fileName } = await createSpriteAttachment(template.sprite, {
     scale: 1,
-    variant: 'species_full'
+    variant: 'template_full'
   });
 
   const movesText =
-    species.moves.length > 0
-      ? species.moves.map((move) => `• **${move.name}** (${move.power}) — ${move.description}`).join('\n')
+    template.moves.length > 0
+      ? template.moves.map((move) => `• **${move.name}** (${move.power}) — ${move.description}`).join('\n')
       : 'No moves recorded.';
 
   const embed = new EmbedBuilder()
-    .setAuthor({ name: species.name, iconURL: `attachment://${iconFile}` })
+    .setAuthor({ name: template.name, iconURL: `attachment://${iconFile}` })
     .setTitle('Stat Sheet')
-    .setDescription(species.description)
+    .setDescription(template.description)
     .setColor(0x32a852)
     .addFields(
-      { name: 'Element', value: species.element, inline: true },
-      { name: 'Tier', value: species.tier, inline: true },
+      { name: 'Element', value: template.element, inline: true },
+      { name: 'Tier', value: template.tier, inline: true },
       {
         name: 'Base Stats',
-        value: `HP ${species.baseHp}\nATK ${species.baseAttack}\nDEF ${species.baseDefense}`,
+        value: `HP ${template.baseHp}\nATK ${template.baseAttack}\nDEF ${template.baseDefense}`,
         inline: true
       },
       { name: 'Moves', value: movesText, inline: false }

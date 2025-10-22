@@ -1,13 +1,13 @@
 import { battleCommand } from './battle.js';
 import { pingCommand } from './ping.js';
 import { registerCommand } from './register.js';
-import { speciesCommand } from './species.js';
+import { oozuCommand } from './oozu.js';
 import { teamCommand } from './team.js';
 
 export const commands = [
   registerCommand,
   teamCommand,
-  speciesCommand,
+  oozuCommand,
   battleCommand,
   pingCommand
 ];

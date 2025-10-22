@@ -6,9 +6,9 @@ export class Move {
   }
 }
 
-export class Species {
+export class OozuTemplate {
   constructor({
-    speciesId,
+    templateId,
     name,
     element,
     tier,
@@ -19,7 +19,7 @@ export class Species {
     baseDefense,
     moves
   }) {
-    this.speciesId = String(speciesId);
+    this.templateId = String(templateId);
     this.name = name;
     this.element = element;
     this.tier = tier;
@@ -33,8 +33,8 @@ export class Species {
 }
 
 export class PlayerOozu {
-  constructor({ speciesId, nickname, level = 1, experience = 0 }) {
-    this.speciesId = String(speciesId);
+  constructor({ templateId, nickname, level = 1, experience = 0 }) {
+    this.templateId = String(templateId);
     this.nickname = String(nickname);
     this.level = Number(level);
     this.experience = Number(experience);
@@ -59,12 +59,12 @@ export class PlayerProfile {
       trainer: this.displayName,
       oozorbs: this.currency,
       oozu: this.oozu.map((creature) => {
-        const species = game.getSpecies(creature.speciesId);
+        const template = game.getTemplate(creature.templateId);
         return {
           nickname: creature.nickname,
-          species: species?.name ?? creature.speciesId,
+          form: template?.name ?? creature.templateId,
           level: creature.level,
-          element: species?.element
+          element: template?.element
         };
       })
     };

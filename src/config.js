@@ -23,7 +23,7 @@ export function loadSettings() {
     commandPrefix,
     guildId,
     dataDir,
-    speciesFile: resolve(dataDir, 'oozu_species.json'),
+    templateFile: resolve(dataDir, 'oozu_templates.json'),
     saveFile: resolve(dataDir, 'player_state.json')
   };
 }

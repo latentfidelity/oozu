@@ -1,27 +1,20 @@
 import { readFile } from 'fs/promises';
 import { randomInt } from 'crypto';
 
-import {
-  BattleLogEntry,
-  BattleSummary,
-  Move,
-  PlayerOozu,
-  PlayerProfile,
-  Species
-} from './models.js';
+import { BattleLogEntry, BattleSummary, Move, PlayerOozu, PlayerProfile, OozuTemplate } from './models.js';
 
 export class GameService {
-  constructor({ store, speciesFile }) {
+  constructor({ store, templateFile }) {
     this.store = store;
-    this.speciesFile = speciesFile;
+    this.templateFile = templateFile;
     this.players = new Map();
-    this.species = new Map();
+    this.templates = new Map();
     this._lock = Promise.resolve();
   }
 
   async initialize() {
     this.players = await this.store.loadPlayers();
-    this.species = await this.loadSpeciesFromFile();
+    this.templates = await this.loadTemplatesFromFile();
   }
 
   async withLock(fn) {
@@ -39,14 +32,14 @@ export class GameService {
     }
   }
 
-  async loadSpeciesFromFile() {
+  async loadTemplatesFromFile() {
     let raw;
     try {
-      raw = await readFile(this.speciesFile, { encoding: 'utf-8' });
+      raw = await readFile(this.templateFile, { encoding: 'utf-8' });
     } catch (err) {
       if (err.code === 'ENOENT') {
         throw new Error(
-          `Missing species data file at ${this.speciesFile}. Add starter data or adjust Oozu settings.`
+          `Missing Oozu template data file at ${this.templateFile}. Add starter data or adjust Oozu settings.`
         );
       }
       throw err;
@@ -64,8 +57,8 @@ export class GameService {
               description: move.description
             })
         ) ?? [];
-      const species = new Species({
-        speciesId: entry.species_id,
+      const template = new OozuTemplate({
+        templateId: entry.template_id,
         name: entry.name,
         element: entry.element,
         tier: entry.tier ?? 'Oozu',
@@ -76,45 +69,45 @@ export class GameService {
         baseDefense: entry.base_defense,
         moves
       });
-      result.set(species.speciesId, species);
+      result.set(template.templateId, template);
     }
     return result;
   }
 
-  listSpecies() {
-    return Array.from(this.species.values());
+  listTemplates() {
+    return Array.from(this.templates.values());
   }
 
-  findSpecies(query) {
+  findTemplate(query) {
     const normalized = query.trim().toLowerCase();
     if (!normalized) {
       return null;
     }
 
-    const direct = this.species.get(normalized);
+    const direct = this.templates.get(normalized);
     if (direct) {
       return direct;
     }
 
-    for (const species of this.species.values()) {
-      const id = species.speciesId.toLowerCase();
+    for (const template of this.templates.values()) {
+      const id = template.templateId.toLowerCase();
       if (id === normalized) {
-        return species;
+        return template;
       }
-      const name = species.name.toLowerCase();
+      const name = template.name.toLowerCase();
       if (name === normalized) {
-        return species;
+        return template;
       }
       const slug = name.replace(/\s+/g, '_');
       if (slug === normalized) {
-        return species;
+        return template;
       }
     }
     return null;
   }
 
-  getSpecies(speciesId) {
-    return this.species.get(speciesId) ?? null;
+  getTemplate(templateId) {
+    return this.templates.get(templateId) ?? null;
   }
 
   getPlayer(userId) {
@@ -137,14 +130,14 @@ export class GameService {
         return profile;
       }
 
-      const starter = this.starterSpecies();
+      const starter = this.starterTemplate();
       profile = new PlayerProfile({
         userId,
         displayName,
         currency: 100,
         oozu: [
           new PlayerOozu({
-            speciesId: starter.speciesId,
+            templateId: starter.templateId,
             nickname: starter.name,
             level: 1
           })
@@ -157,21 +150,21 @@ export class GameService {
     });
   }
 
-  async catchSpecies(userId, speciesId, { nickname } = {}) {
+  async collectOozu(userId, templateId, { nickname } = {}) {
     return this.withLock(async () => {
       const profile = this.players.get(userId);
       if (!profile) {
-        throw new Error('Player must register before catching species.');
+        throw new Error('Player must register before collecting Oozu.');
       }
 
-      const species = this.species.get(speciesId);
-      if (!species) {
-        throw new Error(`Unknown species id ${speciesId}`);
+      const template = this.templates.get(templateId);
+      if (!template) {
+        throw new Error(`Unknown Oozu template id ${templateId}`);
       }
 
-      const finalNickname = this.ensureUniqueNickname(profile, nickname ?? species.name);
+      const finalNickname = this.ensureUniqueNickname(profile, nickname ?? template.name);
       const creature = new PlayerOozu({
-        speciesId: species.speciesId,
+        templateId: template.templateId,
         nickname: finalNickname,
         level: 1
       });
@@ -195,20 +188,20 @@ export class GameService {
 
   async battle({ challenger, challengerOozu, opponent, opponentOozu }) {
     return this.withLock(async () => {
-      const speciesA = this.species.get(challengerOozu.speciesId);
-      const speciesB = this.species.get(opponentOozu.speciesId);
-      if (!speciesA || !speciesB) {
-        throw new Error('Unknown species referenced in battle.');
+      const templateA = this.templates.get(challengerOozu.templateId);
+      const templateB = this.templates.get(opponentOozu.templateId);
+      if (!templateA || !templateB) {
+        throw new Error('Unknown Oozu template referenced in battle.');
       }
 
-      let hpA = this.calculateHp(speciesA, challengerOozu.level);
-      let hpB = this.calculateHp(speciesB, opponentOozu.level);
+      let hpA = this.calculateHp(templateA, challengerOozu.level);
+      let hpB = this.calculateHp(templateB, opponentOozu.level);
 
-      const attackA = this.calculateAttack(speciesA, challengerOozu.level);
-      const attackB = this.calculateAttack(speciesB, opponentOozu.level);
+      const attackA = this.calculateAttack(templateA, challengerOozu.level);
+      const attackB = this.calculateAttack(templateB, opponentOozu.level);
 
-      const defenseA = this.calculateDefense(speciesA, challengerOozu.level);
-      const defenseB = this.calculateDefense(speciesB, opponentOozu.level);
+      const defenseA = this.calculateDefense(templateA, challengerOozu.level);
+      const defenseB = this.calculateDefense(templateB, opponentOozu.level);
 
       let rounds = 0;
       const log = [];
@@ -262,24 +255,24 @@ export class GameService {
     });
   }
 
-  starterSpecies() {
-    const first = this.species.values().next();
+  starterTemplate() {
+    const first = this.templates.values().next();
     if (first.done) {
-      throw new Error('Species not loaded');
+      throw new Error('Oozu templates not loaded');
     }
     return first.value;
   }
 
-  calculateHp(species, level) {
-    return species.baseHp + level * 5;
+  calculateHp(template, level) {
+    return template.baseHp + level * 5;
   }
 
-  calculateAttack(species, level) {
-    return species.baseAttack + level * 2;
+  calculateAttack(template, level) {
+    return template.baseAttack + level * 2;
   }
 
-  calculateDefense(species, level) {
-    return species.baseDefense + level;
+  calculateDefense(template, level) {
+    return template.baseDefense + level;
   }
 
   damage(attack, defense) {

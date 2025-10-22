@@ -5,7 +5,7 @@ Oozu is a Discord game bot now powered by **Node.js** and `discord.js`. It deliv
 ## Features
 
 - Player onboarding with a starter trio (Water, Fire, Flora)
-- Structured species data that supports Oozu → Oozuru → Oozuzuru tiers
+- Structured template data that supports Oozu → Oozuru → Oozuzuru tiers
 - Core team and battle commands for quick playtests
 - JSON-backed persistence so state survives restarts
 
@@ -43,13 +43,13 @@ Follow the playbook in `docs/restart.md` for a quick, repeatable restart workflo
 
 - `/register` / `!register` – join the arena and receive a starter slime
 - `/team` / `!team` – view your trainer profile and current Oozu roster
-- `/species` / `!species` – open a stat sheet (with sprite) for any known species
+- `/oozu` / `!oozu` – open a stat sheet (with sprite) for any known template
 - `/battle` / `!battle` – challenge another trainer (optional `my_oozu` / `their_oozu` arguments)
 - `/ping` / `!ping` – quick health check
 
 ## Data & Persistence
 
-- `data/oozu_species.json` defines each creature's tier, element, sprite path, base stats, and move set. Extend this file to add new slime species (including higher tiers). Sprites live under `sprites/` (full size) and are scaled automatically for `/team`.
+- `data/oozu_templates.json` defines each template's tier, element, sprite path, base stats, and move set. Extend this file to add new Oozu templates (including higher tiers). Sprites live under `sprites/` (full size) and are scaled automatically for `/team`.
 - Player state persists in `data/player_state.json`. It is created on first run; delete it to reset progress.
 
 ## Next Steps
