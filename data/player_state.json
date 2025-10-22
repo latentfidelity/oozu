@@ -4,23 +4,12 @@
     "currency": 100,
     "oozu": [
       {
-        "template_id": "water_oozu",
-        "nickname": "Water Oozu",
+        "template_id": "mystic_oozu",
+        "nickname": "Mystic Oozu",
         "level": 1,
         "experience": 0
       }
-    ]
-  },
-  "909512521038311454": {
-    "display_name": "JamesGriffing",
-    "currency": 100,
-    "oozu": [
-      {
-        "template_id": "water_oozu",
-        "nickname": "Water Oozu",
-        "level": 1,
-        "experience": 0
-      }
-    ]
+    ],
+    "player_class": "Scientist"
   }
 }

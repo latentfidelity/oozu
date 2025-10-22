@@ -1,14 +1,12 @@
-import { battleCommand } from './battle.js';
 import { pingCommand } from './ping.js';
 import { registerCommand } from './register.js';
-import { oozuCommand } from './oozu.js';
+import { resetCommand } from './reset.js';
 import { teamCommand } from './team.js';
 
 export const commands = [
   registerCommand,
   teamCommand,
-  oozuCommand,
-  battleCommand,
+  resetCommand,
   pingCommand
 ];
 

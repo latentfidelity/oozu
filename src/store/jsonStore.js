@@ -47,6 +47,7 @@ export class JsonStore {
         new PlayerProfile({
           userId,
           displayName: entry.display_name ?? entry.displayName,
+          playerClass: entry.player_class ?? entry.playerClass ?? null,
           currency: entry.currency ?? 0,
           oozu
         })
@@ -68,7 +69,8 @@ export class JsonStore {
           nickname: creature.nickname,
           level: creature.level,
           experience: creature.experience
-        }))
+        })),
+        player_class: profile.playerClass
       };
     }
 

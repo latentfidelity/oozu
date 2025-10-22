@@ -70,7 +70,7 @@ export const teamCommand = {
 
     if (interaction.user.id !== ownerId) {
       await interaction.reply({
-        content: "Only the trainer who ran `/team` can open these sheets.",
+        content: "Only the player who ran `/team` can open these sheets.",
         flags: MessageFlags.Ephemeral
       });
       return;
@@ -79,7 +79,7 @@ export const teamCommand = {
     const profile = game.getPlayer(ownerId);
     if (!profile) {
       await interaction.reply({
-        content: 'The trainer is no longer registered.',
+        content: 'The player is no longer registered.',
         flags: MessageFlags.Ephemeral
       });
       return;
@@ -128,16 +128,16 @@ export const teamCommand = {
 };
 
 export async function buildTeamSummary(profile, game) {
-  const profileEmbed = buildProfileEmbed(profile, game, { title: 'Team Profile' })
-    .setColor(0x4b7bec)
-    .setFooter({ text: 'Oozu prototype build 0.1.0' });
+  const profileEmbed = buildProfileEmbed(profile, game, { title: 'Team Profile', includeFooter: false }).setColor(
+    0x4b7bec
+  );
 
   if (!profile.oozu.length) {
     profileEmbed
       .setDescription('No Oozu yet—use `/register` to receive your starter.')
       .setColor(0x5865f2);
     return {
-      content: `${profile.displayName} • Oozorbs: ${profile.currency}`,
+      content: '',
       embeds: [profileEmbed],
       files: [],
       components: []
@@ -173,6 +173,8 @@ export async function buildTeamSummary(profile, game) {
     embeds.push(embed);
   }
 
+  const numberEmojis = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
+
   const buttons = creatures.map((creature, idx) => {
     const template = game.getTemplate(creature.templateId);
     const templateName = template?.name;
@@ -181,6 +183,7 @@ export async function buildTeamSummary(profile, game) {
     return new ButtonBuilder()
       .setCustomId(`team:view:${profile.userId}:${idx}`)
       .setLabel(label)
+      .setEmoji(numberEmojis[idx + 1] ?? '🔢')
       .setStyle(ButtonStyle.Secondary);
   });
 
@@ -191,7 +194,7 @@ export async function buildTeamSummary(profile, game) {
   }
 
   const response = {
-    content: `${profile.displayName} • Oozorbs: ${profile.currency}`,
+    content: '',
     embeds,
     files: attachments,
     components
@@ -226,7 +229,7 @@ export async function buildStatSheet(profile, creature, template) {
     .setDescription(template.description)
     .setColor(0x32a852)
     .addFields(
-      { name: 'Trainer', value: profile.displayName, inline: true },
+      { name: 'Player', value: profile.displayName, inline: true },
       { name: 'Element', value: template.element, inline: true },
       { name: 'Tier', value: template.tier, inline: true },
       {

@@ -4,9 +4,9 @@ Oozu is a Discord game bot now powered by **Node.js** and `discord.js`. It deliv
 
 ## Features
 
-- Player onboarding with a starter trio (Water, Fire, Flora)
+- Player onboarding with class selection and random starter choices
 - Structured template data that supports Oozu → Oozuru → Oozuzuru tiers
-- Core team and battle commands for quick playtests
+- Core team management commands for quick playtests
 - JSON-backed persistence so state survives restarts
 
 ## Getting Started
@@ -41,10 +41,9 @@ Follow the playbook in `docs/restart.md` for a quick, repeatable restart workflo
 
 ## Prototype Commands
 
-- `/register` / `!register` – join the arena and receive a starter slime
-- `/team` / `!team` – view your trainer profile and current Oozu roster
-- `/oozu` / `!oozu` – open a stat sheet (with sprite) for any known template
-- `/battle` / `!battle` – challenge another trainer (optional `my_oozu` / `their_oozu` arguments)
+- `/register` / `!register` – join the arena, choose a class, and pick one of three random starters
+- `/team` / `!team` – view your player profile and current Oozu roster
+- `/reset` / `!reset` – Admins only; clear a player back to the unregistered state
 - `/ping` / `!ping` – quick health check
 
 ## Data & Persistence

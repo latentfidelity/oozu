@@ -122,26 +122,29 @@ export class GameService {
     return [...profile.oozu];
   }
 
-  async getOrRegisterPlayer(userId, displayName) {
+  async registerPlayer({ userId, displayName, playerClass, starterTemplateId }) {
     return this.withLock(async () => {
-      let profile = this.players.get(userId);
-      if (profile) {
-        profile.displayName = displayName;
-        return profile;
+      if (this.players.has(userId)) {
+        throw new Error('Player is already registered.');
       }
 
-      const starter = this.starterTemplate();
-      profile = new PlayerProfile({
+      const template = this.templates.get(starterTemplateId);
+      if (!template) {
+        throw new Error(`Unknown starter template id ${starterTemplateId}`);
+      }
+
+      const starter = new PlayerOozu({
+        templateId: template.templateId,
+        nickname: template.name,
+        level: 1
+      });
+
+      const profile = new PlayerProfile({
         userId,
         displayName,
+        playerClass,
         currency: 100,
-        oozu: [
-          new PlayerOozu({
-            templateId: starter.templateId,
-            nickname: starter.name,
-            level: 1
-          })
-        ]
+        oozu: [starter]
       });
 
       this.players.set(userId, profile);
@@ -255,12 +258,30 @@ export class GameService {
     });
   }
 
-  starterTemplate() {
-    const first = this.templates.values().next();
-    if (first.done) {
-      throw new Error('Oozu templates not loaded');
+  getBaseTemplates() {
+    return this.listTemplates().filter((template) => (template.tier ?? '').toLowerCase() === 'oozu');
+  }
+
+  sampleStarterTemplates(count = 3) {
+    const pool = this.getBaseTemplates();
+    if (pool.length === 0) {
+      throw new Error('No starter templates available.');
     }
-    return first.value;
+    if (pool.length <= count) {
+      return [...pool];
+    }
+
+    const chosen = [];
+    const used = new Set();
+    while (chosen.length < count && used.size < pool.length) {
+      const idx = randomInt(pool.length);
+      if (used.has(idx)) {
+        continue;
+      }
+      used.add(idx);
+      chosen.push(pool[idx]);
+    }
+    return chosen;
   }
 
   calculateHp(template, level) {
@@ -279,6 +300,16 @@ export class GameService {
     const variance = randomInt(-2, 5); // upper bound exclusive
     const raw = attack - Math.floor(defense / 2) + variance;
     return Math.max(3, raw);
+  }
+
+  async resetPlayer(userId) {
+    return this.withLock(async () => {
+      const existed = this.players.delete(userId);
+      if (existed) {
+        await this.persist();
+      }
+      return existed;
+    });
   }
 
   async persist() {

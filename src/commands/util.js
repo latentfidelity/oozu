@@ -2,16 +2,17 @@ import { EmbedBuilder } from 'discord.js';
 
 const FOOTER_TEXT = 'Oozu prototype build 0.1.0';
 
-export function buildProfileEmbed(profile, game, { title }) {
-  const embed = new EmbedBuilder()
-    .setTitle(title)
-    .setColor(randomColor())
-    .setFooter({ text: FOOTER_TEXT })
-    .addFields(
-      { name: 'Trainer', value: profile.displayName, inline: true },
-      { name: 'Oozu Collected', value: String(profile.oozu.length), inline: true },
-      { name: 'Oozorbs', value: String(profile.currency), inline: true }
-    );
+export function buildProfileEmbed(profile, game, { title, includeFooter = true }) {
+  const embed = new EmbedBuilder().setTitle(title).setColor(randomColor()).addFields(
+    { name: 'Player', value: profile.displayName, inline: true },
+    { name: 'Class', value: profile.playerClass ?? 'Unassigned', inline: true },
+    { name: 'Oozu Collected', value: String(profile.oozu.length), inline: true },
+    { name: 'Oozorbs', value: String(profile.currency), inline: true }
+  );
+
+  if (includeFooter) {
+    embed.setFooter({ text: FOOTER_TEXT });
+  }
 
   return embed;
 }

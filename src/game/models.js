@@ -42,9 +42,10 @@ export class PlayerOozu {
 }
 
 export class PlayerProfile {
-  constructor({ userId, displayName, oozu = [], currency = 0 }) {
+  constructor({ userId, displayName, playerClass = null, oozu = [], currency = 0 }) {
     this.userId = String(userId);
     this.displayName = String(displayName);
+    this.playerClass = playerClass ? String(playerClass) : null;
     this.oozu = oozu;
     this.currency = Number(currency);
   }
@@ -56,7 +57,8 @@ export class PlayerProfile {
 
   asPublicDict(game) {
     return {
-      trainer: this.displayName,
+      player: this.displayName,
+      class: this.playerClass,
       oozorbs: this.currency,
       oozu: this.oozu.map((creature) => {
         const template = game.getTemplate(creature.templateId);
