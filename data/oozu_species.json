@@ -1,0 +1,255 @@
+[
+  {
+    "species_id": "water_oozu",
+    "name": "Water Oozu",
+    "element": "Water",
+    "tier": "Oozu",
+    "sprite": "sprites/oozu/water_001.png",
+    "description": "A fluid slime that surges like gentle waves.",
+    "base_hp": 35,
+    "base_attack": 14,
+    "base_defense": 12,
+    "moves": [
+      {
+        "name": "Bubble Burst",
+        "power": 11,
+        "description": "Pops a jet of bubbles to splash foes."
+      },
+      {
+        "name": "Tidal Tap",
+        "power": 13,
+        "description": "Slaps with a watery tendril."
+      }
+    ]
+  },
+  {
+    "species_id": "fire_oozu",
+    "name": "Fire Oozu",
+    "element": "Fire",
+    "tier": "Oozu",
+    "sprite": "sprites/oozu/heat_001.png",
+    "description": "A blazing goo that radiates cozy heat.",
+    "base_hp": 32,
+    "base_attack": 16,
+    "base_defense": 11,
+    "moves": [
+      {
+        "name": "Ember Pop",
+        "power": 12,
+        "description": "Flicks sparks that stick to enemies."
+      },
+      {
+        "name": "Blaze Swirl",
+        "power": 14,
+        "description": "Spins fiery goo in a wide arc."
+      }
+    ]
+  },
+  {
+    "species_id": "flora_oozu",
+    "name": "Flora Oozu",
+    "element": "Flora",
+    "tier": "Oozu",
+    "sprite": "sprites/oozu/flora_001.png",
+    "description": "A leafy slime that blooms with vibrant life.",
+    "base_hp": 38,
+    "base_attack": 13,
+    "base_defense": 13,
+    "moves": [
+      {
+        "name": "Vine Lash",
+        "power": 11,
+        "description": "Cracks a tendril of plant goo."
+      },
+      {
+        "name": "Pollen Puff",
+        "power": 12,
+        "description": "Blows a calming cloud of spores."
+      }
+    ]
+  },
+  {
+    "species_id": "cold_oozu",
+    "name": "Cold Oozu",
+    "element": "Frost",
+    "tier": "Oozu",
+    "sprite": "sprites/oozu/cold_001.png",
+    "description": "A chilled slime that carries the bite of winter winds.",
+    "base_hp": 36,
+    "base_attack": 13,
+    "base_defense": 15,
+    "moves": [
+      {
+        "name": "Glacier Grasp",
+        "power": 11,
+        "description": "Freezes foes with frigid tendrils."
+      },
+      {
+        "name": "Chill Shatter",
+        "power": 14,
+        "description": "Cracks frozen shards across the arena."
+      }
+    ]
+  },
+  {
+    "species_id": "gear_oozu",
+    "name": "Gear Oozu",
+    "element": "Metal",
+    "tier": "Oozu",
+    "sprite": "sprites/oozu/gear_001.png",
+    "description": "A mechanical slime held together by oily cogs and gumption.",
+    "base_hp": 40,
+    "base_attack": 12,
+    "base_defense": 16,
+    "moves": [
+      {
+        "name": "Cog Crush",
+        "power": 12,
+        "description": "Slams rusted gears into opponents."
+      },
+      {
+        "name": "Oil Slick",
+        "power": 10,
+        "description": "Spreads a slick layer that slows enemies."
+      }
+    ]
+  },
+  {
+    "species_id": "lightning_oozu",
+    "name": "Lightning Oozu",
+    "element": "Storm",
+    "tier": "Oozu",
+    "sprite": "sprites/oozu/lightning_001.png",
+    "description": "A crackling slime that streaks with sparks.",
+    "base_hp": 30,
+    "base_attack": 18,
+    "base_defense": 10,
+    "moves": [
+      {
+        "name": "Volt Tickle",
+        "power": 13,
+        "description": "Zaps foes with jittery arcs."
+      },
+      {
+        "name": "Arc Snap",
+        "power": 16,
+        "description": "Chains lightning between nearby targets."
+      }
+    ]
+  },
+  {
+    "species_id": "mystic_oozu",
+    "name": "Mystic Oozu",
+    "element": "Arcane",
+    "tier": "Oozu",
+    "sprite": "sprites/oozu/mystic_001.png",
+    "description": "A shimmering slime etched with floating runes.",
+    "base_hp": 33,
+    "base_attack": 15,
+    "base_defense": 14,
+    "moves": [
+      {
+        "name": "Rune Pulse",
+        "power": 14,
+        "description": "Unleashes a wave of sigil energy."
+      },
+      {
+        "name": "Veil Drift",
+        "power": 12,
+        "description": "Phases partially out of reach while striking."
+      }
+    ]
+  },
+  {
+    "species_id": "shadow_oozu",
+    "name": "Shadow Oozu",
+    "element": "Shadow",
+    "tier": "Oozu",
+    "sprite": "sprites/oozu/shadow_001.png",
+    "description": "A gloomy slime that thrives in dim light.",
+    "base_hp": 34,
+    "base_attack": 17,
+    "base_defense": 12,
+    "moves": [
+      {
+        "name": "Gloom Swipe",
+        "power": 14,
+        "description": "Sweeps darkness across opponents."
+      },
+      {
+        "name": "Umbral Fade",
+        "power": 13,
+        "description": "Slips behind foes for a surprise strike."
+      }
+    ]
+  },
+  {
+    "species_id": "spirit_oozu",
+    "name": "Spirit Oozu",
+    "element": "Spirit",
+    "tier": "Oozu",
+    "sprite": "sprites/oozu/spirit_001.png",
+    "description": "A tranquil slime that resonates with ghostly chimes.",
+    "base_hp": 36,
+    "base_attack": 14,
+    "base_defense": 13,
+    "moves": [
+      {
+        "name": "Haunt Pop",
+        "power": 12,
+        "description": "Echoes with eerie bursts that unsettle enemies."
+      },
+      {
+        "name": "Soul Shine",
+        "power": 15,
+        "description": "Bathes allies in soothing spirit light."
+      }
+    ]
+  },
+  {
+    "species_id": "terra_oozu",
+    "name": "Terra Oozu",
+    "element": "Earth",
+    "tier": "Oozu",
+    "sprite": "sprites/oozu/terra_001.png",
+    "description": "A sturdy slime infused with rich soil and pebbles.",
+    "base_hp": 42,
+    "base_attack": 12,
+    "base_defense": 17,
+    "moves": [
+      {
+        "name": "Boulder Bounce",
+        "power": 13,
+        "description": "Launches rocky chunks with elastic force."
+      },
+      {
+        "name": "Root Rend",
+        "power": 11,
+        "description": "Snags foes with earthen tendrils."
+      }
+    ]
+  },
+  {
+    "species_id": "toxic_oozu",
+    "name": "Toxic Oozu",
+    "element": "Toxic",
+    "tier": "Oozu",
+    "sprite": "sprites/oozu/toxic_001.png",
+    "description": "A caustic slime bubbling with neon fumes.",
+    "base_hp": 33,
+    "base_attack": 16,
+    "base_defense": 12,
+    "moves": [
+      {
+        "name": "Acid Splash",
+        "power": 14,
+        "description": "Splatters corrosive droplets over enemies."
+      },
+      {
+        "name": "Venom Drip",
+        "power": 12,
+        "description": "Oozes poison that lingers after impact."
+      }
+    ]
+  }
+]

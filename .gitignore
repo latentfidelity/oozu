@@ -1,0 +1,19 @@
+# Node dependencies
+node_modules/
+
+# Environment files
+.env
+
+# Logs and runtime artifacts
+logs/
+
+# System files
+.DS_Store
+
+# Toolchain artifacts
+# Bundled runtime (optional, generated)
+tools/
+
+# Coverage or temp
+coverage/
+*.log

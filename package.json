@@ -1,0 +1,24 @@
+{
+  "name": "oozuarena-bot",
+  "version": "0.1.0",
+  "description": "Oozu Arena prototype rewritten for Node.js with discord.js",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
+    "sharp": "^0.33.3"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  },
+  "license": "MIT"
+}
