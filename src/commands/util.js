@@ -11,9 +11,10 @@ export function buildProfileEmbed(profile, game, { title, includeFooter = true }
     .addFields(
       { name: 'Player', value: profile.displayName, inline: true },
       { name: 'Class', value: profile.playerClass ?? 'Unassigned', inline: true },
+      { name: 'Level', value: String(resolvePlayerLevel(profile)), inline: true },
+      { name: 'Stamina', value: renderStamina(profile), inline: true },
       { name: 'Oozorbs', value: String(profile.currency), inline: true }
-    )
-    .addFields({ name: 'Stamina', value: renderStamina(profile), inline: false });
+    );
 
   if (includeFooter) {
     embed.setFooter({ text: FOOTER_TEXT });
@@ -55,4 +56,18 @@ function renderStamina(profile) {
   const filled = '■'.repeat(current);
   const empty = '□'.repeat(Math.max(0, max - current));
   return filled + empty;
+}
+
+function resolvePlayerLevel(profile) {
+  if (!Array.isArray(profile.oozu) || profile.oozu.length === 0) {
+    return 1;
+  }
+  let maxLevel = 1;
+  for (const creature of profile.oozu) {
+    const level = Number.isFinite(creature.level) ? Number(creature.level) : 1;
+    if (level > maxLevel) {
+      maxLevel = level;
+    }
+  }
+  return Math.max(1, maxLevel);
 }
