@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { createSpriteAttachment } from '../src/utils/sprites.js';
 
 describe('createSpriteAttachment', () => {
-  const spritePath = 'sprites/oozu/water_001.png';
+  const spritePath = 'sprites/oozu/aqua_001.png';
 
   it('returns attachment metadata with expected file name and size when scaled', async () => {
     const originalBuffer = await readFile(spritePath);
@@ -16,7 +16,7 @@ describe('createSpriteAttachment', () => {
       variant: 'team_test'
     });
 
-    expect(fileName).toBe('water_001_team_test.png');
+    expect(fileName).toBe('aqua_001_team_test.png');
     expect(attachment.name).toBe(fileName);
     expect(Buffer.isBuffer(attachment.attachment)).toBe(true);
 
@@ -45,7 +45,7 @@ describe('createSpriteAttachment', () => {
       variant: 'icon'
     });
 
-    expect(fileName).toBe('water_001_icon.png');
+    expect(fileName).toBe('aqua_001_icon.png');
     const metadata = await sharp(attachment.attachment).metadata();
     expect(metadata.width).toBeLessThanOrEqual(targetWidth);
   });
