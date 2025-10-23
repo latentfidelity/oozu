@@ -31,7 +31,7 @@ describe('GameService template lookup', () => {
 
   it('finds templates by id and case-insensitive slug', () => {
     expect(game.findTemplate('lightning_oozu')?.name).toBe('Lightning Oozu');
-    expect(game.findTemplate('shadow_oozu')?.element).toBe('Shadow');
+    expect(game.findTemplate('shadow_oozu')?.element).toBe('Umbra');
     expect(game.findTemplate('earth oozu')?.tier).toBe('Oozu');
   });
 
