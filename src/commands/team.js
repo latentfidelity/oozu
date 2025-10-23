@@ -325,8 +325,7 @@ export async function buildStatSheet(profile, creature, template, { index } = {}
       { name: 'Item', value: 'None', inline: true },
       { name: 'Moves', value: movesText, inline: false }
     )
-    .setImage(`attachment://${spriteFile}`)
-    .setFooter({ text: 'Oozu prototype build 0.1.0' });
+    .setImage(`attachment://${spriteFile}`);
 
   const renameButton = new ButtonBuilder()
     .setCustomId(`team:rename:${profile.userId}:${index}`)

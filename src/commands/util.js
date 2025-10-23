@@ -2,8 +2,6 @@ import { EmbedBuilder } from 'discord.js';
 
 import { DEFAULT_MAX_STAMINA } from '../game/models.js';
 
-const FOOTER_TEXT = 'Oozu prototype build 0.1.0';
-
 export function buildProfileEmbed(profile, game, { title = '', includeFooter = true, avatarURL } = {}) {
   const embed = new EmbedBuilder().setColor(randomColor());
 
@@ -22,10 +20,6 @@ export function buildProfileEmbed(profile, game, { title = '', includeFooter = t
       { name: 'Oozorbs', value: String(profile.currency), inline: true }
     );
 
-  if (includeFooter) {
-    embed.setFooter({ text: FOOTER_TEXT });
-  }
-
   return embed;
 }
 
@@ -34,7 +28,6 @@ export function buildBattleEmbed(summary, challengerCreature, opponentCreature) 
     .setTitle(`${summary.challenger} vs ${summary.opponent}`)
     .setDescription(`${summary.winner} takes the win!`)
     .setColor(0xff6b6b)
-    .setFooter({ text: FOOTER_TEXT })
     .addFields(
       { name: 'Challenger Oozu', value: challengerCreature, inline: true },
       { name: 'Opponent Oozu', value: opponentCreature, inline: true },
