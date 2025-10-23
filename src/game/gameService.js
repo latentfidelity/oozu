@@ -201,6 +201,41 @@ export class GameService {
     });
   }
 
+  async renameOozu({ userId, index, nickname }) {
+    if (!Number.isInteger(index) || index < 0) {
+      throw new Error('That Oozu is not available.');
+    }
+
+    const desired = String(nickname ?? '').trim();
+    if (!desired) {
+      throw new Error('Nickname cannot be empty.');
+    }
+    if (desired.length > 32) {
+      throw new Error('Nickname must be 32 characters or fewer.');
+    }
+
+    return this.withLock(async () => {
+      const profile = this.players.get(userId);
+      if (!profile) {
+        throw new Error('Player must register before renaming Oozu.');
+      }
+
+      if (index >= profile.oozu.length) {
+        throw new Error('That Oozu is not available.');
+      }
+
+      const target = profile.oozu[index];
+      const existing = profile.findOozu(desired);
+      if (existing && existing !== target) {
+        throw new Error('Another Oozu already uses that nickname.');
+      }
+
+      target.nickname = desired;
+      await this.persist();
+      return { profile, creature: target };
+    });
+  }
+
   ensureUniqueNickname(profile, nickname) {
     const base = nickname;
     let suffix = 2;

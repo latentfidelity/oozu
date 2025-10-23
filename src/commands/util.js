@@ -4,14 +4,20 @@ import { DEFAULT_MAX_STAMINA } from '../game/models.js';
 
 const FOOTER_TEXT = 'Oozu prototype build 0.1.0';
 
-export function buildProfileEmbed(profile, game, { title, includeFooter = true }) {
-  const embed = new EmbedBuilder()
-    .setTitle(title)
-    .setColor(randomColor())
+export function buildProfileEmbed(profile, game, { title = '', includeFooter = true, avatarURL } = {}) {
+  const embed = new EmbedBuilder().setColor(randomColor());
+
+  if (title) {
+    embed.setTitle(title);
+  }
+
+  embed
+    .setAuthor({
+      name: `${profile.displayName} • Lv ${resolvePlayerLevel(profile)}`,
+      iconURL: avatarURL ?? undefined
+    })
     .addFields(
-      { name: 'Player', value: profile.displayName, inline: true },
       { name: 'Class', value: profile.playerClass ?? 'Unassigned', inline: true },
-      { name: 'Level', value: String(resolvePlayerLevel(profile)), inline: true },
       { name: 'Stamina', value: renderStamina(profile), inline: true },
       { name: 'Oozorbs', value: String(profile.currency), inline: true }
     );

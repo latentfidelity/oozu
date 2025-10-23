@@ -98,6 +98,43 @@ describe('GameService registration', () => {
   });
 });
 
+describe('GameService rename Oozu', () => {
+  let game;
+
+  beforeEach(async () => {
+    const storeStub = {
+      loadPlayers: async () => new Map(),
+      savePlayers: async () => {}
+    };
+
+    game = new GameService({
+      store: storeStub,
+      templateFile: resolve(__dirname, '../data/oozu_templates.json')
+    });
+
+    await game.initialize();
+    await game.registerPlayer({
+      userId: 'rename-user',
+      displayName: 'Renamer',
+      playerClass: 'Tamer',
+      starterTemplateId: 'water_oozu'
+    });
+  });
+
+  it('renames an Oozu when nickname is unique', async () => {
+    const result = await game.renameOozu({ userId: 'rename-user', index: 0, nickname: 'Splash' });
+    expect(result.creature.nickname).toBe('Splash');
+    expect(game.getPlayer('rename-user').oozu[0].nickname).toBe('Splash');
+  });
+
+  it('rejects duplicate nicknames', async () => {
+    await game.collectOozu('rename-user', 'fire_oozu');
+    await expect(game.renameOozu({ userId: 'rename-user', index: 1, nickname: 'Water Oozu' })).rejects.toThrow(
+      'Another Oozu already uses that nickname.'
+    );
+  });
+});
+
 describe('GameService player reset', () => {
   let game;
   let savedPlayers;

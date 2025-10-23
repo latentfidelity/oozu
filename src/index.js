@@ -72,6 +72,32 @@ async function main() {
       return;
     }
 
+    if (interaction.isModalSubmit()) {
+      const [commandKey] = interaction.customId.split(':');
+      const command = commandMap.get(commandKey);
+      if (!command?.handleModal) {
+        return;
+      }
+
+      try {
+        await command.handleModal(interaction, context);
+      } catch (err) {
+        console.error(`Error handling modal for ${commandKey}`, err);
+        if (interaction.deferred || interaction.replied) {
+          await interaction.followUp({
+            content: 'Something went wrong handling that action.',
+            flags: MessageFlags.Ephemeral
+          });
+        } else {
+          await interaction.reply({
+            content: 'Something went wrong handling that action.',
+            flags: MessageFlags.Ephemeral
+          });
+        }
+      }
+      return;
+    }
+
     if (interaction.isAutocomplete()) {
       const command = commandMap.get(interaction.commandName);
       if (!command?.handleAutocomplete) {

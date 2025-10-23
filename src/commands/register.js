@@ -105,7 +105,10 @@ export const registerCommand = {
   async handleInteraction(interaction, { game }) {
     const existing = game.getPlayer(interaction.user.id);
     if (existing) {
-      const embed = buildProfileEmbed(existing, game, { title: 'You are already registered!' });
+      const embed = buildProfileEmbed(existing, game, {
+        title: 'You are already registered!',
+        avatarURL: interaction.user.displayAvatarURL?.() ?? interaction.user.avatarURL?.()
+      });
       await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
       return;
     }
@@ -123,7 +126,10 @@ export const registerCommand = {
   async handleMessage(message, args, { game }) {
     const existing = game.getPlayer(message.author.id);
     if (existing) {
-      const embed = buildProfileEmbed(existing, game, { title: 'You are already registered!' });
+      const embed = buildProfileEmbed(existing, game, {
+        title: 'You are already registered!',
+        avatarURL: message.author.displayAvatarURL?.() ?? message.author.avatarURL?.()
+      });
       await message.reply({ embeds: [embed] });
       return;
     }
@@ -229,7 +235,10 @@ export const registerCommand = {
       });
       console.log('[register] completed', ownerId, 'class', playerClass, 'starter', templateId);
 
-      const embed = buildProfileEmbed(profile, game, { title: 'Welcome to Oozu World!' });
+      const embed = buildProfileEmbed(profile, game, {
+        title: 'Welcome to Oozu World!',
+        avatarURL: interaction.user.displayAvatarURL?.() ?? interaction.user.avatarURL?.()
+      });
       await interaction.update({ embeds: [embed], components: [], content: '', files: [] });
     } catch (err) {
       await interaction.reply({
