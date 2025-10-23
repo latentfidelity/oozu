@@ -1,7 +1,15 @@
 import { readFile } from 'fs/promises';
 import { randomInt } from 'crypto';
 
-import { BattleLogEntry, BattleSummary, Move, PlayerOozu, PlayerProfile, OozuTemplate } from './models.js';
+import {
+  BattleLogEntry,
+  BattleSummary,
+  Move,
+  PlayerOozu,
+  PlayerProfile,
+  OozuTemplate,
+  DEFAULT_MAX_STAMINA
+} from './models.js';
 
 export class GameService {
   constructor({ store, templateFile }) {
@@ -157,7 +165,9 @@ export class GameService {
         displayName,
         playerClass,
         currency: 100,
-        oozu: [starter]
+        oozu: [starter],
+        stamina: DEFAULT_MAX_STAMINA,
+        maxStamina: DEFAULT_MAX_STAMINA
       });
 
       this.players.set(userId, profile);

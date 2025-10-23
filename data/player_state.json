@@ -2,6 +2,8 @@
   "1006284640966934539": {
     "display_name": "Lofi",
     "currency": 100,
+    "stamina": 3,
+    "max_stamina": 3,
     "oozu": [
       {
         "template_id": "mystic_oozu",

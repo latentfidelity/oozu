@@ -1,14 +1,19 @@
 import { EmbedBuilder } from 'discord.js';
 
+import { DEFAULT_MAX_STAMINA } from '../game/models.js';
+
 const FOOTER_TEXT = 'Oozu prototype build 0.1.0';
 
 export function buildProfileEmbed(profile, game, { title, includeFooter = true }) {
-  const embed = new EmbedBuilder().setTitle(title).setColor(randomColor()).addFields(
-    { name: 'Player', value: profile.displayName, inline: true },
-    { name: 'Class', value: profile.playerClass ?? 'Unassigned', inline: true },
-    { name: 'Oozu Collected', value: String(profile.oozu.length), inline: true },
-    { name: 'Oozorbs', value: String(profile.currency), inline: true }
-  );
+  const embed = new EmbedBuilder()
+    .setTitle(title)
+    .setColor(randomColor())
+    .addFields(
+      { name: 'Player', value: profile.displayName, inline: true },
+      { name: 'Class', value: profile.playerClass ?? 'Unassigned', inline: true },
+      { name: 'Oozorbs', value: String(profile.currency), inline: true }
+    )
+    .addFields({ name: 'Stamina', value: renderStamina(profile), inline: false });
 
   if (includeFooter) {
     embed.setFooter({ text: FOOTER_TEXT });
@@ -42,4 +47,12 @@ export function buildBattleEmbed(summary, challengerCreature, opponentCreature) 
 
 function randomColor() {
   return Math.floor(Math.random() * 0xffffff);
+}
+
+function renderStamina(profile) {
+  const max = Number.isFinite(profile.maxStamina) && profile.maxStamina > 0 ? profile.maxStamina : DEFAULT_MAX_STAMINA;
+  const current = Number.isFinite(profile.stamina) ? Math.max(0, Math.min(profile.stamina, max)) : max;
+  const filled = '■'.repeat(current);
+  const empty = '□'.repeat(Math.max(0, max - current));
+  return filled + empty;
 }

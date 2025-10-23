@@ -75,6 +75,8 @@ describe('GameService registration', () => {
     expect(profile.playerClass).toBe('Hunter');
     expect(profile.oozu).toHaveLength(1);
     expect(profile.oozu[0].templateId).toBe('fire_oozu');
+    expect(profile.stamina).toBe(3);
+    expect(profile.maxStamina).toBe(3);
   });
 
   it('prevents duplicate registration', async () => {

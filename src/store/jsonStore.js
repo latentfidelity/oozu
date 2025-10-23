@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'fs/promises';
 
-import { PlayerOozu, PlayerProfile } from '../game/models.js';
+import { PlayerOozu, PlayerProfile, DEFAULT_MAX_STAMINA } from '../game/models.js';
 
 export class JsonStore {
   constructor(path) {
@@ -42,6 +42,10 @@ export class JsonStore {
             })
         ) ?? [];
 
+      const maxStamina = entry.max_stamina ?? entry.maxStamina ?? DEFAULT_MAX_STAMINA;
+      const stamina =
+        entry.stamina ?? entry.current_stamina ?? entry.currentStamina ?? maxStamina ?? DEFAULT_MAX_STAMINA;
+
       players.set(
         userId,
         new PlayerProfile({
@@ -49,7 +53,9 @@ export class JsonStore {
           displayName: entry.display_name ?? entry.displayName,
           playerClass: entry.player_class ?? entry.playerClass ?? null,
           currency: entry.currency ?? 0,
-          oozu
+          oozu,
+          stamina,
+          maxStamina
         })
       );
     }
@@ -64,6 +70,8 @@ export class JsonStore {
       payload[userId] = {
         display_name: profile.displayName,
         currency: profile.currency,
+        stamina: profile.stamina,
+        max_stamina: profile.maxStamina,
         oozu: profile.oozu.map((creature) => ({
           template_id: creature.templateId,
           nickname: creature.nickname,
