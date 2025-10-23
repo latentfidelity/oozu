@@ -11,10 +11,12 @@ Oozu World is a Discord game bot now powered by **Node.js** and `discord.js`. It
 
 ## Getting Started
 
+> **Standard procedure:** Use the bundled Node.js runtime by running commands through `./scripts/dev_shell.sh`. Example: `./scripts/dev_shell.sh npm install`. This keeps everyone on the pinned toolchain without reinstalling Node globally.
+
 1. **Install dependencies**
 
    ```bash
-   npm install
+   ./scripts/dev_shell.sh npm install
    ```
 
 2. **Configure the bot**
@@ -27,7 +29,7 @@ Oozu World is a Discord game bot now powered by **Node.js** and `discord.js`. It
 3. **Launch the bot**
 
    ```bash
-   npm start
+   ./scripts/dev_shell.sh npm start
    ```
 
 4. **Invite to your server** using the OAuth URL from the Discord Developer Portal. Ensure `MESSAGE CONTENT INTENT` is enabled so prefix commands can function.

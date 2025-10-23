@@ -1,9 +1,11 @@
+import { actionCommand } from './action.js';
 import { pingCommand } from './ping.js';
 import { registerCommand } from './register.js';
 import { resetCommand } from './reset.js';
 import { teamCommand } from './team.js';
 
 export const commands = [
+  actionCommand,
   registerCommand,
   teamCommand,
   resetCommand,

@@ -4,13 +4,15 @@ Use this checklist whenever you need to bounce the Oozu bot without getting stuc
 
 > **Important:** Only one bot process should ever be running for a given Discord token. Before restarting locally, make sure any other servers (old Python builds, previous dev laptops, production boxes, etc.) have been shut down or are using a different token.
 
+> **Standard procedure:** Run all commands via the bundled Node.js toolchain: `./scripts/dev_shell.sh <command>`. This keeps `node`/`npm` available even on fresh machines.
+
 ## 1. Verify configuration
 - Confirm `.env` includes a valid `OOZU_BOT_TOKEN` (reset in the Discord portal if unsure).
 - Optional: check `OOZU_GUILD_ID` matches the target server.
 
 ## 2. Ensure dependencies are installed
 ```bash
-npm install
+./scripts/dev_shell.sh npm install
 ```
 
 ## 3. Confirm no other bot processes are running
@@ -43,7 +45,7 @@ The script performs the following once all prior processes are gone:
 
 Prefer the script so logs persist to `logs/oozuworld_bot.log`, but you can also run a one-off foreground session via:
 ```bash
-npm start
+./scripts/dev_shell.sh npm start
 ```
 Press `Ctrl+C` to stop the foreground process.
 

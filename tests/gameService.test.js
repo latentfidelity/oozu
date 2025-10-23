@@ -178,3 +178,59 @@ describe('GameService player reset', () => {
     expect(removed).toBe(false);
   });
 });
+
+describe('GameService stamina spending', () => {
+  let game;
+  let savedPlayers;
+
+  beforeEach(async () => {
+    savedPlayers = null;
+    const storeStub = {
+      loadPlayers: async () => new Map(),
+      savePlayers: async (players) => {
+        savedPlayers = players;
+      }
+    };
+
+    game = new GameService({
+      store: storeStub,
+      templateFile: resolve(__dirname, '../data/oozu_templates.json')
+    });
+
+    await game.initialize();
+    await game.registerPlayer({
+      userId: 'stamina-user',
+      displayName: 'Runner',
+      playerClass: 'Hunter',
+      starterTemplateId: 'fire_oozu'
+    });
+  });
+
+  it('spends stamina and persists the update', async () => {
+    savedPlayers = null;
+    const profile = game.getPlayer('stamina-user');
+    expect(profile).not.toBeNull();
+    if (!profile) {
+      return;
+    }
+    const initialStamina = profile.stamina;
+    expect(initialStamina).toBeGreaterThan(0);
+
+    const updated = await game.spendStamina('stamina-user', 1);
+    expect(updated.stamina).toBe(initialStamina - 1);
+    expect(savedPlayers).not.toBeNull();
+    const persisted = savedPlayers?.find((entry) => entry.userId === 'stamina-user');
+    expect(persisted).toBeDefined();
+    expect(persisted?.stamina).toBe(updated.stamina);
+  });
+
+  it('rejects when stamina is exhausted', async () => {
+    const profile = game.getPlayer('stamina-user');
+    expect(profile).not.toBeNull();
+    if (!profile) {
+      return;
+    }
+    await game.spendStamina('stamina-user', profile.stamina);
+    await expect(game.spendStamina('stamina-user', 1)).rejects.toThrow('Not enough stamina.');
+  });
+});

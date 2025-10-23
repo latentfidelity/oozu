@@ -201,6 +201,27 @@ export class GameService {
     });
   }
 
+  async spendStamina(userId, amount = 1) {
+    if (!Number.isInteger(amount) || amount <= 0) {
+      throw new Error('Stamina cost must be a positive integer.');
+    }
+
+    return this.withLock(async () => {
+      const profile = this.players.get(userId);
+      if (!profile) {
+        throw new Error('Player must register before taking actions.');
+      }
+
+      if (profile.stamina < amount) {
+        throw new Error('Not enough stamina.');
+      }
+
+      profile.stamina -= amount;
+      await this.persist();
+      return profile;
+    });
+  }
+
   async renameOozu({ userId, index, nickname }) {
     if (!Number.isInteger(index) || index < 0) {
       throw new Error('That Oozu is not available.');
