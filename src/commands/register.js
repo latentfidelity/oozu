@@ -100,7 +100,7 @@ export const registerCommand = {
   name: 'register',
   slashData: new SlashCommandBuilder()
     .setName('register')
-    .setDescription('Join the Oozu arena.'),
+    .setDescription('Join Oozu World.'),
 
   async handleInteraction(interaction, { game }) {
     const existing = game.getPlayer(interaction.user.id);
@@ -229,7 +229,7 @@ export const registerCommand = {
       });
       console.log('[register] completed', ownerId, 'class', playerClass, 'starter', templateId);
 
-      const embed = buildProfileEmbed(profile, game, { title: 'Welcome to the Oozu Arena!' });
+      const embed = buildProfileEmbed(profile, game, { title: 'Welcome to Oozu World!' });
       await interaction.update({ embeds: [embed], components: [], content: '', files: [] });
     } catch (err) {
       await interaction.reply({

@@ -1,6 +1,6 @@
-# Oozu Arena Prototype
+# Oozu World Prototype
 
-Oozu is a Discord game bot now powered by **Node.js** and `discord.js`. It delivers the same creature collecting and battling experience as the original Python prototype while making it easier to iterate with the modern JavaScript ecosystem.
+Oozu World is a Discord game bot now powered by **Node.js** and `discord.js`. It delivers the same creature collecting and battling experience as the original Python prototype while making it easier to iterate with the modern JavaScript ecosystem.
 
 ## Features
 
@@ -41,7 +41,7 @@ Follow the playbook in `docs/restart.md` for a quick, repeatable restart workflo
 
 ## Prototype Commands
 
-- `/register` / `!register` – join the arena, choose a class, and pick one of three random starters
+- `/register` / `!register` – step into Oozu World, choose a class, and pick one of three random starters
 - `/team` / `!team` – view your player profile and current Oozu roster
 - `/reset` / `!reset` – Admins only; clear a player back to the unregistered state
 - `/ping` / `!ping` – quick health check
@@ -57,4 +57,4 @@ Follow the playbook in `docs/restart.md` for a quick, repeatable restart workflo
 - Expand battle mechanics (status effects, move variety, elemental bonuses).
 - Integrate more robust storage (SQL or Hasura) if persistence requirements grow.
 
-Have fun oozing! Contributions and ideas are welcome as we continue shaping the arena.
+Have fun oozing! Contributions and ideas are welcome as we continue shaping the world.

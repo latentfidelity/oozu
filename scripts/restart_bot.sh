@@ -8,9 +8,9 @@ if [[ -d "$LOCAL_NODE_DIR/bin" ]]; then
 fi
 NODE_BIN="$(command -v node || true)"
 LOG_DIR="$ROOT_DIR/logs"
-LOG_FILE="$LOG_DIR/oozu_bot.log"
+LOG_FILE="$LOG_DIR/oozuworld_bot.log"
 PROCESS_PATTERN="src/index.js"
-LEGACY_PATTERN="oozuarena.app"
+LEGACY_PATTERN="oozuworld.app"
 
 if [[ -z "$NODE_BIN" ]]; then
   echo "Node.js is not available on PATH. Install Node 18.17+ and try again."

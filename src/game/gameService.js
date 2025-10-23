@@ -67,7 +67,8 @@ export class GameService {
         baseHp: entry.base_hp,
         baseAttack: entry.base_attack,
         baseDefense: entry.base_defense,
-        moves
+        moves,
+        aliases: Array.isArray(entry.aliases) ? entry.aliases : []
       });
       result.set(template.templateId, template);
     }
@@ -83,23 +84,35 @@ export class GameService {
     if (!normalized) {
       return null;
     }
+    const slug = normalized.includes(' ') ? normalized.replace(/\s+/g, '_') : normalized;
 
-    const direct = this.templates.get(normalized);
+    const direct = this.templates.get(normalized) ?? this.templates.get(slug);
     if (direct) {
       return direct;
     }
 
     for (const template of this.templates.values()) {
+      const variants = new Set();
       const id = template.templateId.toLowerCase();
-      if (id === normalized) {
-        return template;
-      }
+      variants.add(id);
+      variants.add(id.replace(/\s+/g, '_'));
+
       const name = template.name.toLowerCase();
-      if (name === normalized) {
-        return template;
+      variants.add(name);
+      variants.add(name.replace(/\s+/g, '_'));
+
+      if (Array.isArray(template.aliases) && template.aliases.length > 0) {
+        for (const alias of template.aliases) {
+          const aliasLower = alias.trim().toLowerCase();
+          if (!aliasLower) {
+            continue;
+          }
+          variants.add(aliasLower);
+          variants.add(aliasLower.replace(/\s+/g, '_'));
+        }
       }
-      const slug = name.replace(/\s+/g, '_');
-      if (slug === normalized) {
+
+      if (variants.has(normalized) || variants.has(slug)) {
         return template;
       }
     }

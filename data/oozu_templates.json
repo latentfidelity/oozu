@@ -216,6 +216,10 @@
     "base_hp": 42,
     "base_attack": 12,
     "base_defense": 17,
+    "aliases": [
+      "earth oozu",
+      "earth_oozu"
+    ],
     "moves": [
       {
         "name": "Boulder Bounce",

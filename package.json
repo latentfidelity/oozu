@@ -1,7 +1,7 @@
 {
-  "name": "oozuarena-bot",
+  "name": "oozuworld-bot",
   "version": "0.1.0",
-  "description": "Oozu Arena prototype rewritten for Node.js with discord.js",
+  "description": "Oozu World prototype rewritten for Node.js with discord.js",
   "type": "module",
   "main": "src/index.js",
   "scripts": {

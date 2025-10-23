@@ -23,7 +23,7 @@ Run the helper script while on the host that should be active:
 
 The script now ensures:
 1. Any local `node src/index.js` instances are terminated (forcefully if necessary).
-2. Legacy Python processes such as `python -m oozuarena.app` are stopped.
+2. Legacy Python processes such as `python -m oozuworld.app` are stopped.
 3. It refuses to launch if *any* prior bot process is still running.
 
 If the script exits with an error about remaining processes, stop those first (or log into the other machine and shut them down) before retrying.
@@ -35,13 +35,13 @@ If the script exits with an error about remaining processes, stop those first (o
 
 The script performs the following once all prior processes are gone:
 1. Stops any existing `node src/index.js` process.
-2. Stops any legacy Python `oozuarena.app` processes.
+2. Stops any legacy Python `oozuworld.app` processes.
 3. Starts a fresh instance with your system `node` binary.
 4. Streams basic status logs so you can confirm the bot logged in successfully.
 
 > Tip: the script is idempotent—run it again any time you want to redeploy changes.
 
-Prefer the script so logs persist to `logs/oozu_bot.log`, but you can also run a one-off foreground session via:
+Prefer the script so logs persist to `logs/oozuworld_bot.log`, but you can also run a one-off foreground session via:
 ```bash
 npm start
 ```

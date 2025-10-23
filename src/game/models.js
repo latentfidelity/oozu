@@ -17,7 +17,8 @@ export class OozuTemplate {
     baseHp,
     baseAttack,
     baseDefense,
-    moves
+    moves,
+    aliases = []
   }) {
     this.templateId = String(templateId);
     this.name = name;
@@ -29,6 +30,7 @@ export class OozuTemplate {
     this.baseAttack = Number(baseAttack);
     this.baseDefense = Number(baseDefense);
     this.moves = moves;
+    this.aliases = Array.isArray(aliases) ? aliases.map((alias) => String(alias)) : [];
   }
 }
 
