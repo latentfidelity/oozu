@@ -193,7 +193,7 @@ teamCommand.handleModal = async function handleTeamModal(interaction, { game }) 
     if (interaction.message) {
       await interaction.message
         .edit({
-          content: 'Renamed successfully.',
+          content: 'Renamed successfully. Re-open the sheet for the updated details.',
           embeds: [],
           components: [],
           attachments: []
@@ -315,7 +315,7 @@ export async function buildStatSheet(profile, creature, template, { index } = {}
       name: `${creature.nickname} • Lv ${creature.level}`,
       iconURL: `attachment://${iconFile}`
     })
-    .setTitle(`${template.name} Stat Sheet`)
+    .setTitle(template.name)
     .setDescription(template.description)
     .setColor(0x32a852)
     .addFields(
