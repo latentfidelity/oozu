@@ -83,7 +83,7 @@ describe('GameService registration', () => {
     await game.registerPlayer({
       userId: '123',
       displayName: 'Tester',
-      playerClass: 'Scientist',
+      playerClass: 'Alchemist',
       starterTemplateId: 'mystic_oozu'
     });
 

@@ -10,7 +10,7 @@ import {
 import { buildProfileEmbed } from './util.js';
 import { createSpriteAttachment } from '../utils/sprites.js';
 
-const PLAYER_CLASSES = ['Tamer', 'Hunter', 'Scientist'];
+const PLAYER_CLASSES = ['Tamer', 'Hunter', 'Alchemist'];
 const NUMBER_EMOJIS = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
 
 const CLASS_KEY_MAP = new Map(PLAYER_CLASSES.map((cls) => [cls.toLowerCase(), cls]));
@@ -119,7 +119,8 @@ export const registerCommand = {
     await interaction.reply({
       content: 'Choose your class to continue registration.',
       embeds: classPrompt.embeds,
-      components: classPrompt.components
+      components: classPrompt.components,
+      flags: MessageFlags.Ephemeral
     });
   },
 

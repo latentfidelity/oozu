@@ -33,7 +33,10 @@ export const teamCommand = {
     }
 
     try {
-      await interaction.reply({ content: 'Rendering your squad... ⏳' });
+      await interaction.reply({
+        content: 'Rendering your squad... ⏳',
+        flags: MessageFlags.Ephemeral
+      });
       console.log('[team] sent initial reply', interaction.id);
       const response = await buildTeamSummary(profile, game, {
         avatarURL: interaction.user.displayAvatarURL?.() ?? interaction.user.avatarURL?.()
@@ -92,11 +95,22 @@ export const teamCommand = {
       return;
     }
 
+    if (action === 'summary') {
+      const response = await buildTeamSummary(profile, game, {
+        avatarURL: interaction.user.displayAvatarURL?.() ?? interaction.user.avatarURL?.()
+      });
+      await interaction.update({ ...response, attachments: [] });
+      return;
+    }
+
     const index = Number(indexToken);
     if (!Number.isInteger(index) || index < 0 || index >= profile.oozu.length) {
-      await interaction.reply({
-        content: 'That Oozu is not available.',
-        flags: MessageFlags.Ephemeral
+      const summary = await buildTeamSummary(profile, game, {
+        avatarURL: interaction.user.displayAvatarURL?.() ?? interaction.user.avatarURL?.()
+      });
+      await interaction.update({
+        ...summary,
+        content: 'That Oozu is not available.'
       });
       return;
     }
@@ -104,9 +118,12 @@ export const teamCommand = {
     const creature = profile.oozu[index];
     const template = game.getTemplate(creature.templateId);
     if (!template) {
-      await interaction.reply({
-        content: 'Template data missing—try again later.',
-        flags: MessageFlags.Ephemeral
+      const summary = await buildTeamSummary(profile, game, {
+        avatarURL: interaction.user.displayAvatarURL?.() ?? interaction.user.avatarURL?.()
+      });
+      await interaction.update({
+        ...summary,
+        content: 'Template data missing—try again later.'
       });
       return;
     }
@@ -130,24 +147,22 @@ export const teamCommand = {
     }
 
     try {
-      await interaction.reply({ content: 'Opening stat sheet...', flags: MessageFlags.Ephemeral });
-      console.log('[team] component acked', interaction.id, 'choice', index);
-      const response = await buildStatSheet(profile, creature, template, { index });
+      const response = await buildStatSheet(profile, creature, template, {
+        index,
+        ownerId
+      });
       console.log('[team] component built sheet', interaction.id);
-      await interaction.editReply(response);
-      console.log('[team] component edited reply', interaction.id);
+      await interaction.update(response);
+      console.log('[team] component updated reply', interaction.id);
     } catch (err) {
       console.error('Failed to build stat sheet', err);
-      if (interaction.replied || interaction.deferred) {
-        await interaction.editReply({
-          content: 'Something went wrong while rendering that stat sheet. Please try again later.',
-          embeds: [],
-          files: [],
-          components: []
-        });
-      } else {
-        throw err;
-      }
+      const summary = await buildTeamSummary(profile, game, {
+        avatarURL: interaction.user.displayAvatarURL?.() ?? interaction.user.avatarURL?.()
+      });
+      await interaction.update({
+        ...summary,
+        content: 'Something went wrong while rendering that stat sheet. Please try again later.'
+      });
     }
   }
 };
@@ -178,33 +193,48 @@ teamCommand.handleModal = async function handleTeamModal(interaction, { game }) 
   }
 
   try {
+    await interaction.deferUpdate();
+  } catch (err) {
+    console.error('Failed to defer rename modal update', err);
+    return;
+  }
+
+  try {
     const { profile, creature } = await game.renameOozu({ userId: ownerId, index, nickname });
     const template = game.getTemplate(creature.templateId);
     if (!template) {
       throw new Error('Template data missing—try again later.');
     }
-    const response = await buildStatSheet(profile, creature, template, { index });
-    const replyPayload = {
-      ...response,
-      content: `Renamed to **${creature.nickname}**.`,
-      flags: MessageFlags.Ephemeral
-    };
-    await interaction.reply(replyPayload);
+    const response = await buildStatSheet(profile, creature, template, { index, ownerId });
     if (interaction.message) {
-      await interaction.message
-        .edit({
-          content: 'Renamed successfully. Re-open the sheet for the updated details.',
-          embeds: [],
-          components: [],
-          attachments: []
-        })
-        .catch(() => {});
+      await interaction.message.edit(response);
     }
   } catch (err) {
-    await interaction.reply({
-      content: err.message ?? 'Failed to rename Oozu.',
-      flags: MessageFlags.Ephemeral
-    });
+    console.error('Failed to rename Oozu', err);
+    if (interaction.message) {
+      try {
+        const fallbackProfile = game.getPlayer(ownerId);
+        if (fallbackProfile) {
+          const summary = await buildTeamSummary(fallbackProfile, game, {
+            avatarURL: interaction.user.displayAvatarURL?.() ?? interaction.user.avatarURL?.()
+          });
+          await interaction.message.edit({
+            ...summary,
+            content: err.message ?? 'Failed to rename Oozu.'
+          });
+        } else {
+          await interaction.message.edit({
+            content: err.message ?? 'Failed to rename Oozu.',
+            embeds: [],
+            components: [],
+            files: [],
+            attachments: []
+          });
+        }
+      } catch {
+        /* ignore follow-up edit errors */
+      }
+    }
   }
 };
 
@@ -223,7 +253,8 @@ export async function buildTeamSummary(profile, game, { avatarURL } = {}) {
       content: '',
       embeds: [profileEmbed],
       files: [],
-      components: []
+      components: [],
+      attachments: []
     };
   }
 
@@ -279,16 +310,16 @@ export async function buildTeamSummary(profile, game, { avatarURL } = {}) {
     components.push(new ActionRowBuilder().addComponents(rowButtons));
   }
 
-  const response = {
+  return {
     content: '',
     embeds,
     files: attachments,
-    components
+    components,
+    attachments: []
   };
-  return response;
 }
 
-export async function buildStatSheet(profile, creature, template, { index } = {}) {
+export async function buildStatSheet(profile, creature, template, { index, ownerId } = {}) {
   if (!Number.isInteger(index) || index < 0) {
     throw new Error('Missing Oozu index for stat sheet rendering.');
   }
@@ -327,14 +358,25 @@ export async function buildStatSheet(profile, creature, template, { index } = {}
     )
     .setImage(`attachment://${spriteFile}`);
 
+  const targetOwnerId = ownerId ?? profile.userId;
+
   const renameButton = new ButtonBuilder()
     .setCustomId(`team:rename:${profile.userId}:${index}`)
     .setLabel('Rename')
     .setStyle(ButtonStyle.Secondary);
 
+  const backButton = new ButtonBuilder()
+    .setCustomId(`team:summary:${targetOwnerId}`)
+    .setLabel('Back')
+    .setStyle(ButtonStyle.Secondary);
+
+  const actionRow = new ActionRowBuilder().addComponents(renameButton, backButton);
+
   return {
+    content: '',
     embeds: [embed],
     files: [iconAttachment, spriteAttachment],
-    components: [new ActionRowBuilder().addComponents(renameButton)]
+    components: [actionRow],
+    attachments: []
   };
 }
