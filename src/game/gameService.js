@@ -11,6 +11,7 @@ import {
   OozuTemplate,
   DEFAULT_MAX_STAMINA
 } from './models.js';
+import { HuntingQuestManager } from './quests/huntingQuest.js';
 
 export class GameService {
   constructor({ store, templateFile, itemsFile = null }) {
@@ -21,6 +22,7 @@ export class GameService {
     this.templates = new Map();
     this.items = new Map();
     this._lock = Promise.resolve();
+    this.huntingManager = new HuntingQuestManager(this);
   }
 
   async initialize() {
@@ -621,6 +623,30 @@ export class GameService {
     });
   }
 
+  startHuntingQuest(userId) {
+    return this.huntingManager.start(userId);
+  }
+
+  chooseHuntingQuestOption({ userId, questId, optionId }) {
+    return this.huntingManager.choose({ userId, questId, optionId });
+  }
+
+  getHuntingQuest(userId) {
+    return this.huntingManager.getQuest(userId);
+  }
+
+  abandonHuntingQuest(userId) {
+    this.huntingManager.abandon(userId);
+  }
+
+  completeHuntingQuestFinale({ userId, questId }) {
+    return this.huntingManager.finalize({ userId, questId });
+  }
+
+  resolveHuntingEventAction({ userId, questId, optionId }) {
+    return this.huntingManager.resolveEventAction({ userId, questId, optionId });
+  }
+
   async renameOozu({ userId, index, nickname }) {
     if (!Number.isInteger(index) || index < 0) {
       throw new Error('That Oozu is not available.');
@@ -816,11 +842,16 @@ export class GameService {
 
   async resetPlayer(userId) {
     return this.withLock(async () => {
-      const existed = this.players.delete(userId);
-      if (existed) {
-        await this.persist();
+      const profile = this.players.get(userId);
+      if (!profile) {
+        return false;
       }
-      return existed;
+
+      profile.stamina = profile.maxStamina;
+      this.huntingManager.abandon(userId);
+      const removed = this.players.delete(userId);
+      await this.persist();
+      return removed;
     });
   }
 
