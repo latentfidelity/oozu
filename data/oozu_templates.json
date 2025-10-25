@@ -1,7 +1,7 @@
 [
   {
     "template_id": "water_oozu",
-    "name": "Water Oozu",
+    "name": "Aqua Oozu",
     "element": "Aqua",
     "tier": "Oozu",
     "sprite": "sprites/oozu/aqua_001.png",
@@ -24,7 +24,7 @@
   },
   {
     "template_id": "fire_oozu",
-    "name": "Flame Oozu",
+    "name": "Ignis Oozu",
     "element": "Ignis",
     "tier": "Oozu",
     "sprite": "sprites/oozu/ignis_001.png",
@@ -70,7 +70,7 @@
   },
   {
     "template_id": "cold_oozu",
-    "name": "Frost Oozu",
+    "name": "Glacies Oozu",
     "element": "Glacies",
     "tier": "Oozu",
     "sprite": "sprites/oozu/glacies_001.png",
@@ -93,7 +93,7 @@
   },
   {
     "template_id": "gear_oozu",
-    "name": "Gear Oozu",
+    "name": "Machina Oozu",
     "element": "Machina",
     "tier": "Oozu",
     "sprite": "sprites/oozu/machina_001.png",
@@ -116,7 +116,7 @@
   },
   {
     "template_id": "lightning_oozu",
-    "name": "Lightning Oozu",
+    "name": "Fulmen Oozu",
     "element": "Fulmen",
     "tier": "Oozu",
     "sprite": "sprites/oozu/fulmen_001.png",
@@ -139,7 +139,7 @@
   },
   {
     "template_id": "mystic_oozu",
-    "name": "Mystic Oozu",
+    "name": "Arcanum Oozu",
     "element": "Arcanum",
     "tier": "Oozu",
     "sprite": "sprites/oozu/arcanum_001.png",
@@ -162,7 +162,7 @@
   },
   {
     "template_id": "shadow_oozu",
-    "name": "Shadow Oozu",
+    "name": "Umbra Oozu",
     "element": "Umbra",
     "tier": "Oozu",
     "sprite": "sprites/oozu/umbra_001.png",
@@ -185,7 +185,7 @@
   },
   {
     "template_id": "spirit_oozu",
-    "name": "Spirit Oozu",
+    "name": "Spiritus Oozu",
     "element": "Spiritus",
     "tier": "Oozu",
     "sprite": "sprites/oozu/spiritus_001.png",
@@ -235,7 +235,7 @@
   },
   {
     "template_id": "toxic_oozu",
-    "name": "Toxic Oozu",
+    "name": "Toxicum Oozu",
     "element": "Toxicum",
     "tier": "Oozu",
     "sprite": "sprites/oozu/toxicum_001.png",

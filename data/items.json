@@ -1,0 +1,20 @@
+[
+  {
+    "item_id": "healing_orb",
+    "name": "Healing Orb",
+    "description": "A restorative sphere that Oozu like to hold.",
+    "type": "consumable"
+  },
+  {
+    "item_id": "power_charm",
+    "name": "Power Charm",
+    "description": "A charm that hums with offensive energy.",
+    "type": "held"
+  },
+  {
+    "item_id": "defense_shell",
+    "name": "Defense Shell",
+    "description": "A polished shell that calms nervous Oozu.",
+    "type": "held"
+  }
+]

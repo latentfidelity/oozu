@@ -18,7 +18,8 @@ describe('GameService template lookup', () => {
 
     game = new GameService({
       store: storeStub,
-      templateFile: resolve(__dirname, '../data/oozu_templates.json')
+      templateFile: resolve(__dirname, '../data/oozu_templates.json'),
+      itemsFile: resolve(__dirname, '../data/items.json')
     });
 
     await game.initialize();
@@ -30,7 +31,7 @@ describe('GameService template lookup', () => {
   });
 
   it('finds templates by id and case-insensitive slug', () => {
-    expect(game.findTemplate('lightning_oozu')?.name).toBe('Lightning Oozu');
+    expect(game.findTemplate('lightning_oozu')?.name).toBe('Fulmen Oozu');
     expect(game.findTemplate('shadow_oozu')?.element).toBe('Umbra');
     expect(game.findTemplate('earth oozu')?.tier).toBe('Oozu');
   });
@@ -51,7 +52,8 @@ describe('GameService registration', () => {
 
     game = new GameService({
       store: storeStub,
-      templateFile: resolve(__dirname, '../data/oozu_templates.json')
+      templateFile: resolve(__dirname, '../data/oozu_templates.json'),
+      itemsFile: resolve(__dirname, '../data/items.json')
     });
 
     await game.initialize();
@@ -68,6 +70,8 @@ describe('GameService registration', () => {
     const profile = await game.registerPlayer({
       userId: '123',
       displayName: 'Tester',
+      gender: 'Male',
+      pronoun: 'he',
       playerClass: 'Hunter',
       starterTemplateId: 'fire_oozu'
     });
@@ -77,12 +81,15 @@ describe('GameService registration', () => {
     expect(profile.oozu[0].templateId).toBe('fire_oozu');
     expect(profile.stamina).toBe(3);
     expect(profile.maxStamina).toBe(3);
+    expect(profile.pronoun).toBe('he');
   });
 
   it('prevents duplicate registration', async () => {
     await game.registerPlayer({
       userId: '123',
       displayName: 'Tester',
+      gender: 'Female',
+      pronoun: 'she',
       playerClass: 'Alchemist',
       starterTemplateId: 'mystic_oozu'
     });
@@ -91,6 +98,8 @@ describe('GameService registration', () => {
       game.registerPlayer({
         userId: '123',
         displayName: 'Tester 2',
+        gender: 'Other',
+        pronoun: 'they',
         playerClass: 'Tamer',
         starterTemplateId: 'water_oozu'
       })
@@ -109,13 +118,16 @@ describe('GameService rename Oozu', () => {
 
     game = new GameService({
       store: storeStub,
-      templateFile: resolve(__dirname, '../data/oozu_templates.json')
+      templateFile: resolve(__dirname, '../data/oozu_templates.json'),
+      itemsFile: resolve(__dirname, '../data/items.json')
     });
 
     await game.initialize();
     await game.registerPlayer({
       userId: 'rename-user',
       displayName: 'Renamer',
+      gender: 'Female',
+      pronoun: 'she',
       playerClass: 'Tamer',
       starterTemplateId: 'water_oozu'
     });
@@ -129,7 +141,7 @@ describe('GameService rename Oozu', () => {
 
   it('rejects duplicate nicknames', async () => {
     await game.collectOozu('rename-user', 'fire_oozu');
-    await expect(game.renameOozu({ userId: 'rename-user', index: 1, nickname: 'Water Oozu' })).rejects.toThrow(
+    await expect(game.renameOozu({ userId: 'rename-user', index: 1, nickname: 'Aqua Oozu' })).rejects.toThrow(
       'Another Oozu already uses that nickname.'
     );
   });
@@ -150,7 +162,8 @@ describe('GameService player reset', () => {
 
     game = new GameService({
       store: storeStub,
-      templateFile: resolve(__dirname, '../data/oozu_templates.json')
+      templateFile: resolve(__dirname, '../data/oozu_templates.json'),
+      itemsFile: resolve(__dirname, '../data/items.json')
     });
 
     await game.initialize();
@@ -161,6 +174,8 @@ describe('GameService player reset', () => {
     const profile = await game.registerPlayer({
       userId,
       displayName: 'Tester',
+      gender: 'Male',
+      pronoun: 'he',
       playerClass: 'Tamer',
       starterTemplateId: 'water_oozu'
     });
@@ -194,13 +209,16 @@ describe('GameService stamina spending', () => {
 
     game = new GameService({
       store: storeStub,
-      templateFile: resolve(__dirname, '../data/oozu_templates.json')
+      templateFile: resolve(__dirname, '../data/oozu_templates.json'),
+      itemsFile: resolve(__dirname, '../data/items.json')
     });
 
     await game.initialize();
     await game.registerPlayer({
       userId: 'stamina-user',
       displayName: 'Runner',
+      gender: 'Other',
+      pronoun: 'they',
       playerClass: 'Hunter',
       starterTemplateId: 'fire_oozu'
     });
@@ -232,5 +250,125 @@ describe('GameService stamina spending', () => {
     }
     await game.spendStamina('stamina-user', profile.stamina);
     await expect(game.spendStamina('stamina-user', 1)).rejects.toThrow('Not enough stamina.');
+  });
+});
+
+describe('GameService inventory management', () => {
+  let game;
+  let savedPlayers;
+
+  beforeEach(async () => {
+    savedPlayers = null;
+    const storeStub = {
+      loadPlayers: async () => new Map(),
+      savePlayers: async (players) => {
+        savedPlayers = players;
+      }
+    };
+
+    game = new GameService({
+      store: storeStub,
+      templateFile: resolve(__dirname, '../data/oozu_templates.json'),
+      itemsFile: resolve(__dirname, '../data/items.json')
+    });
+
+    await game.initialize();
+    await game.registerPlayer({
+      userId: 'inventory-user',
+      displayName: 'Collector',
+      gender: 'Other',
+      pronoun: 'they',
+      playerClass: 'Alchemist',
+      starterTemplateId: 'water_oozu'
+    });
+
+    await game.registerPlayer({
+      userId: 'trade-target',
+      displayName: 'Trader',
+      gender: 'Male',
+      pronoun: 'he',
+      playerClass: 'Hunter',
+      starterTemplateId: 'fire_oozu'
+    });
+  });
+
+  it('adds items to inventory and persists changes', async () => {
+    const result = await game.addItemToInventory('inventory-user', 'healing_orb', 2);
+    expect(result.profile.getItemQuantity('healing_orb')).toBe(2);
+    expect(result.item.itemId).toBe('healing_orb');
+    expect(savedPlayers).not.toBeNull();
+    const persisted = savedPlayers?.find((entry) => entry.userId === 'inventory-user');
+    expect(persisted?.inventory?.get('healing_orb')).toBe(2);
+  });
+
+  it('equips and unequips held items correctly', async () => {
+    await game.addItemToInventory('inventory-user', 'healing_orb', 2);
+    const equip = await game.giveItemToOozu({
+      userId: 'inventory-user',
+      oozuIndex: 0,
+      itemId: 'healing_orb'
+    });
+    expect(equip.creature.heldItem).toBe('healing_orb');
+    expect(equip.profile.getItemQuantity('healing_orb')).toBe(1);
+
+    const unequip = await game.unequipItemFromOozu({
+      userId: 'inventory-user',
+      oozuIndex: 0
+    });
+    expect(unequip.creature.heldItem).toBeNull();
+    expect(unequip.itemId).toBe('healing_orb');
+    expect(unequip.profile.getItemQuantity('healing_orb')).toBe(2);
+  });
+
+  it('trades items between players', async () => {
+    await game.addItemToInventory('inventory-user', 'power_charm', 3);
+    const trade = await game.tradeItem({
+      fromUserId: 'inventory-user',
+      toUserId: 'trade-target',
+      itemId: 'power_charm',
+      quantity: 2
+    });
+
+    expect(trade.sender.getItemQuantity('power_charm')).toBe(1);
+    expect(trade.recipient.getItemQuantity('power_charm')).toBe(2);
+    expect(trade.item.itemId).toBe('power_charm');
+  });
+
+  it('rejects removing items that are not owned', async () => {
+    await game.addItemToInventory('inventory-user', 'defense_shell', 1);
+    await game.removeItemFromInventory('inventory-user', 'defense_shell', 1);
+    await expect(
+      game.removeItemFromInventory('inventory-user', 'defense_shell', 1)
+    ).rejects.toThrow('Not enough items in inventory.');
+  });
+
+  it('discards items from inventory', async () => {
+    await game.addItemToInventory('inventory-user', 'healing_orb', 3);
+    const result = await game.removeItemFromInventory('inventory-user', 'healing_orb', 2);
+    expect(result.item.itemId).toBe('healing_orb');
+    expect(result.profile.getItemQuantity('healing_orb')).toBe(1);
+  });
+
+  it('updates and clears player portrait', async () => {
+    const updated = await game.setPlayerPortrait({
+      userId: 'inventory-user',
+      portraitUrl: 'https://example.com/portrait.png'
+    });
+    expect(updated.portraitUrl).toBe('https://example.com/portrait.png');
+
+    const cleared = await game.setPlayerPortrait({
+      userId: 'inventory-user',
+      portraitUrl: ''
+    });
+    expect(cleared.portraitUrl).toBeNull();
+  });
+
+  it('rejects invalid portrait urls', async () => {
+    await expect(
+      game.setPlayerPortrait({
+        userId: 'inventory-user',
+        portraitUrl: 'ftp://example.com/image.png'
+      })
+    ).rejects.toThrow('Provide a valid image URL using http or https.');
   });
 });

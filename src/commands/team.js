@@ -18,6 +18,13 @@ import { buildProfileEmbed } from './util.js';
 const SMALL_ICON_WIDTH = 64;
 const MAX_TEAM_DISPLAY = 6;
 
+function renderHeldItem(game, creature) {
+  if (!creature?.heldItem) {
+    return 'None';
+  }
+  return game.getItem(creature.heldItem)?.name ?? creature.heldItem;
+}
+
 export const teamCommand = {
   name: 'team',
   slashData: new SlashCommandBuilder().setName('team').setDescription('Show your active team.'),
@@ -103,6 +110,33 @@ export const teamCommand = {
       return;
     }
 
+    if (action === 'player') {
+      const response = buildPlayerSheet(profile, game, {
+        ownerId,
+        avatarURL: interaction.user.displayAvatarURL?.() ?? interaction.user.avatarURL?.()
+      });
+      await interaction.update(response);
+      return;
+    }
+
+    if (action === 'portrait') {
+      const modal = new ModalBuilder().setCustomId(`team:portrait:${ownerId}`).setTitle('Update Portrait');
+      const input = new TextInputBuilder()
+        .setCustomId('portrait_url')
+        .setLabel('Image URL (leave blank to clear)')
+        .setPlaceholder('https://example.com/image.png')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false)
+        .setMaxLength(512);
+      modal.addComponents(new ActionRowBuilder().addComponents(input));
+      await interaction.showModal(modal);
+      return;
+    }
+
+    if (action !== 'view' && action !== 'rename') {
+      return;
+    }
+
     const index = Number(indexToken);
     if (!Number.isInteger(index) || index < 0 || index >= profile.oozu.length) {
       const summary = await buildTeamSummary(profile, game, {
@@ -169,15 +203,52 @@ export const teamCommand = {
 
 teamCommand.handleModal = async function handleTeamModal(interaction, { game }) {
   const [commandKey, action, ownerId, indexToken] = interaction.customId.split(':');
-  if (commandKey !== 'team' || action !== 'rename') {
+  if (commandKey !== 'team') {
     return;
   }
 
   if (interaction.user.id !== ownerId) {
     await interaction.reply({
-      content: 'Only the player who ran `/team` can rename this Oozu.',
+      content: 'Only the player who ran `/team` can update this information.',
       flags: MessageFlags.Ephemeral
     });
+    return;
+  }
+
+  if (action === 'portrait') {
+    const rawUrl = interaction.fields.getTextInputValue('portrait_url') ?? '';
+    let portraitUrl = rawUrl.trim();
+
+    try {
+      await interaction.deferUpdate();
+    } catch (err) {
+      console.error('Failed to defer portrait modal update', err);
+      return;
+    }
+
+    try {
+      const updatedProfile = await game.setPlayerPortrait({
+        userId: ownerId,
+        portraitUrl
+      });
+      const response = buildPlayerSheet(updatedProfile, game, {
+        ownerId,
+        avatarURL: interaction.user.displayAvatarURL?.() ?? interaction.user.avatarURL?.()
+      });
+      if (interaction.message) {
+        await interaction.message.edit(response);
+      }
+    } catch (err) {
+      console.error('Failed to update portrait', err);
+      await interaction.followUp({
+        content: err.message ?? 'Failed to update portrait.',
+        flags: MessageFlags.Ephemeral
+      });
+    }
+    return;
+  }
+
+  if (action !== 'rename') {
     return;
   }
 
@@ -242,7 +313,8 @@ export async function buildTeamSummary(profile, game, { avatarURL } = {}) {
   const profileEmbed = buildProfileEmbed(profile, game, {
     title: '',
     includeFooter: false,
-    avatarURL
+    avatarURL,
+    includeInventory: false
   }).setColor(0x4b7bec);
 
   if (!profile.oozu.length) {
@@ -283,7 +355,7 @@ export async function buildTeamSummary(profile, game, { avatarURL } = {}) {
       .addFields(
         { name: 'Element', value: template.element, inline: true },
         { name: 'Tier', value: template.tier, inline: true },
-        { name: 'Item', value: 'None', inline: true }
+        { name: 'Item', value: renderHeldItem(game, creature), inline: true }
       )
       .setColor(0x4b7bec)
       .setFooter({ text: 'Select this Oozu to view the full sheet.' });
@@ -292,6 +364,12 @@ export async function buildTeamSummary(profile, game, { avatarURL } = {}) {
   }
 
   const numberEmojis = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
+
+  const playerButton = new ButtonBuilder()
+    .setCustomId(`team:player:${profile.userId}`)
+    .setLabel(profile.displayName)
+    .setEmoji('👤')
+    .setStyle(ButtonStyle.Secondary);
 
   const buttons = creatures.map((creature, idx) => {
     const template = game.getTemplate(creature.templateId);
@@ -304,7 +382,7 @@ export async function buildTeamSummary(profile, game, { avatarURL } = {}) {
       .setStyle(ButtonStyle.Secondary);
   });
 
-  const components = [];
+  const components = [new ActionRowBuilder().addComponents(playerButton)];
   for (let i = 0; i < buttons.length; i += 5) {
     const rowButtons = buttons.slice(i, i + 5);
     components.push(new ActionRowBuilder().addComponents(rowButtons));
@@ -353,7 +431,7 @@ export async function buildStatSheet(profile, creature, template, { index, owner
       { name: 'Player', value: profile.displayName, inline: true },
       { name: 'Element', value: template.element, inline: true },
       { name: 'Tier', value: template.tier, inline: true },
-      { name: 'Item', value: 'None', inline: true },
+      { name: 'Item', value: renderHeldItem(game, creature), inline: true },
       { name: 'Moves', value: movesText, inline: false }
     )
     .setImage(`attachment://${spriteFile}`);
@@ -377,6 +455,47 @@ export async function buildStatSheet(profile, creature, template, { index, owner
     embeds: [embed],
     files: [iconAttachment, spriteAttachment],
     components: [actionRow],
+    attachments: []
+  };
+}
+
+function buildPlayerSheet(profile, game, { ownerId, avatarURL } = {}) {
+  const embed = buildProfileEmbed(profile, game, {
+    title: 'Player Overview',
+    avatarURL,
+    includeInventory: false
+  });
+
+  if (profile.portraitUrl) {
+    embed.setImage(profile.portraitUrl);
+  } else {
+    embed.addFields({ name: 'Portrait', value: 'No portrait set. Use Change Portrait to add one.', inline: false });
+  }
+
+  const inventoryButton = new ButtonBuilder()
+    .setCustomId(`items:menu:${ownerId}:open`)
+    .setLabel('Open Inventory')
+    .setEmoji('🎒')
+    .setStyle(ButtonStyle.Primary);
+
+  const portraitButton = new ButtonBuilder()
+    .setCustomId(`team:portrait:${ownerId}`)
+    .setLabel(profile.portraitUrl ? 'Change Portrait' : 'Set Portrait')
+    .setEmoji('🖼️')
+    .setStyle(ButtonStyle.Secondary);
+
+  const backButton = new ButtonBuilder()
+    .setCustomId(`team:summary:${ownerId}`)
+    .setLabel('Back')
+    .setStyle(ButtonStyle.Secondary);
+
+  const components = [new ActionRowBuilder().addComponents(inventoryButton, portraitButton, backButton)];
+
+  return {
+    content: '',
+    embeds: [embed],
+    components,
+    files: [],
     attachments: []
   };
 }

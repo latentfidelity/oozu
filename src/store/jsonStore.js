@@ -38,7 +38,8 @@ export class JsonStore {
               templateId: creature.template_id ?? creature.templateId,
               nickname: creature.nickname,
               level: creature.level ?? 1,
-              experience: creature.experience ?? 0
+              experience: creature.experience ?? 0,
+              heldItem: creature.held_item ?? creature.heldItem ?? null
             })
         ) ?? [];
 
@@ -51,11 +52,15 @@ export class JsonStore {
         new PlayerProfile({
           userId,
           displayName: entry.display_name ?? entry.displayName,
+          gender: entry.gender ?? entry.gender_key ?? null,
+          pronoun: entry.pronoun ?? entry.preferred_pronoun ?? null,
           playerClass: entry.player_class ?? entry.playerClass ?? null,
           currency: entry.currency ?? 0,
           oozu,
           stamina,
-          maxStamina
+          maxStamina,
+          inventory: entry.inventory ?? entry.items ?? null,
+          portraitUrl: entry.portrait_url ?? entry.portraitUrl ?? null
         })
       );
     }
@@ -69,6 +74,8 @@ export class JsonStore {
       const userId = String(profile.userId);
       payload[userId] = {
         display_name: profile.displayName,
+        gender: profile.gender,
+        pronoun: profile.pronoun,
         currency: profile.currency,
         stamina: profile.stamina,
         max_stamina: profile.maxStamina,
@@ -76,9 +83,12 @@ export class JsonStore {
           template_id: creature.templateId,
           nickname: creature.nickname,
           level: creature.level,
-          experience: creature.experience
+          experience: creature.experience,
+          held_item: creature.heldItem
         })),
-        player_class: profile.playerClass
+        player_class: profile.playerClass,
+        inventory: Object.fromEntries(profile.inventory.entries()),
+        portrait_url: profile.portraitUrl
       };
     }
 

@@ -2,12 +2,17 @@ import { EmbedBuilder } from 'discord.js';
 
 import { DEFAULT_MAX_STAMINA } from '../game/models.js';
 
-export function buildProfileEmbed(profile, game, { title = '', includeFooter = true, avatarURL } = {}) {
+export function buildProfileEmbed(profile, game, { title = '', includeFooter = true, avatarURL, includeInventory = true } = {}) {
   const embed = new EmbedBuilder().setColor(randomColor());
 
   if (title) {
     embed.setTitle(title);
   }
+
+  const inventoryEntries = profile.inventoryEntries?.() ?? [];
+  const totalItems = inventoryEntries.reduce((sum, entry) => sum + entry.quantity, 0);
+  const uniqueItems = inventoryEntries.length;
+  const inventorySummary = uniqueItems === 0 ? 'Empty' : `${totalItems} total (${uniqueItems} types)`;
 
   embed
     .setAuthor({
@@ -15,10 +20,15 @@ export function buildProfileEmbed(profile, game, { title = '', includeFooter = t
       iconURL: avatarURL ?? undefined
     })
     .addFields(
+      { name: 'Gender', value: profile.gender ?? 'Unspecified', inline: true },
       { name: 'Class', value: profile.playerClass ?? 'Unassigned', inline: true },
       { name: 'Stamina', value: renderStamina(profile), inline: true },
       { name: 'Oozorbs', value: String(profile.currency), inline: true }
     );
+
+  if (includeInventory) {
+    embed.addFields({ name: 'Items', value: inventorySummary, inline: true });
+  }
 
   return embed;
 }

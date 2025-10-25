@@ -4,6 +4,7 @@ import { randomInt } from 'crypto';
 import {
   BattleLogEntry,
   BattleSummary,
+  ItemTemplate,
   Move,
   PlayerOozu,
   PlayerProfile,
@@ -12,17 +13,20 @@ import {
 } from './models.js';
 
 export class GameService {
-  constructor({ store, templateFile }) {
+  constructor({ store, templateFile, itemsFile = null }) {
     this.store = store;
     this.templateFile = templateFile;
+    this.itemsFile = itemsFile;
     this.players = new Map();
     this.templates = new Map();
+    this.items = new Map();
     this._lock = Promise.resolve();
   }
 
   async initialize() {
     this.players = await this.store.loadPlayers();
     this.templates = await this.loadTemplatesFromFile();
+    this.items = await this.loadItemsFromFile();
   }
 
   async withLock(fn) {
@@ -81,6 +85,95 @@ export class GameService {
       result.set(template.templateId, template);
     }
     return result;
+  }
+
+  async loadItemsFromFile() {
+    if (!this.itemsFile) {
+      return new Map();
+    }
+
+    let raw;
+    try {
+      raw = await readFile(this.itemsFile, { encoding: 'utf-8' });
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        return new Map();
+      }
+      throw err;
+    }
+
+    if (!raw.trim()) {
+      return new Map();
+    }
+
+    let payload;
+    try {
+      payload = JSON.parse(raw);
+    } catch (err) {
+      console.error('[game] failed to parse items file', err);
+      return new Map();
+    }
+
+    const result = new Map();
+    for (const entry of payload) {
+      const itemId = entry?.item_id ?? entry?.itemId ?? entry?.id;
+      if (!itemId) {
+        continue;
+      }
+      const item = new ItemTemplate({
+        itemId,
+        name: entry.name,
+        description: entry.description,
+        type: entry.type ?? 'general'
+      });
+      const key = String(item.itemId);
+      result.set(key, item);
+    }
+    return result;
+  }
+
+  listItems() {
+    return Array.from(this.items.values());
+  }
+
+  getItem(itemId) {
+    if (!itemId) {
+      return null;
+    }
+    const direct = this.items.get(String(itemId));
+    if (direct) {
+      return direct;
+    }
+    const normalized = String(itemId).toLowerCase();
+    for (const item of this.items.values()) {
+      if (item.itemId.toLowerCase() === normalized) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  findItem(query) {
+    if (!query) {
+      return null;
+    }
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) {
+      return null;
+    }
+
+    const direct = this.items.get(normalized);
+    if (direct) {
+      return direct;
+    }
+
+    for (const item of this.items.values()) {
+      const name = item.name?.toLowerCase();
+      if (item.itemId.toLowerCase() === normalized || (name && name === normalized)) {
+        return item;
+      }
+    }
+    return null;
   }
 
   listTemplates() {
@@ -143,7 +236,193 @@ export class GameService {
     return [...profile.oozu];
   }
 
-  async registerPlayer({ userId, displayName, playerClass, starterTemplateId }) {
+  listInventory(userId) {
+    const profile = this.players.get(userId);
+    if (!profile) {
+      return [];
+    }
+    return profile.inventoryEntries();
+  }
+
+  async addItemToInventory(userId, itemId, quantity = 1) {
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new Error('Quantity must be a positive integer.');
+    }
+
+    const item = this.getItem(itemId);
+    if (!item) {
+      throw new Error('Unknown item id.');
+    }
+
+    return this.withLock(async () => {
+      const profile = this.players.get(userId);
+      if (!profile) {
+        throw new Error('Player must register before receiving items.');
+      }
+      const updated = profile.adjustItemQuantity(item.itemId, quantity);
+      await this.persist();
+      return { profile, item, quantity: updated };
+    });
+  }
+
+  async removeItemFromInventory(userId, itemId, quantity = 1) {
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new Error('Quantity must be a positive integer.');
+    }
+
+    const item = this.getItem(itemId);
+    if (!item) {
+      throw new Error('Unknown item id.');
+    }
+
+    return this.withLock(async () => {
+      const profile = this.players.get(userId);
+      if (!profile) {
+        throw new Error('Player must register before using items.');
+      }
+      const owned = profile.getItemQuantity(item.itemId);
+      if (owned < quantity) {
+        throw new Error('Not enough items in inventory.');
+      }
+      profile.adjustItemQuantity(item.itemId, -quantity);
+      await this.persist();
+      return { profile, item, remaining: profile.getItemQuantity(item.itemId) };
+    });
+  }
+
+  async setPlayerPortrait({ userId, portraitUrl }) {
+    return this.withLock(async () => {
+      const profile = this.players.get(userId);
+      if (!profile) {
+        throw new Error('Player must register before updating their portrait.');
+      }
+
+      const trimmed = typeof portraitUrl === 'string' ? portraitUrl.trim() : '';
+      if (!trimmed) {
+        profile.portraitUrl = null;
+      } else {
+        let parsed;
+        try {
+          parsed = new URL(trimmed);
+        } catch (err) {
+          throw new Error('Provide a valid image URL using http or https.');
+        }
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+          throw new Error('Provide a valid image URL using http or https.');
+        }
+        profile.portraitUrl = parsed.toString();
+      }
+
+      await this.persist();
+      return profile;
+    });
+  }
+
+  async tradeItem({ fromUserId, toUserId, itemId, quantity = 1 }) {
+    if (!fromUserId || !toUserId) {
+      throw new Error('Both players are required for a trade.');
+    }
+    if (fromUserId === toUserId) {
+      throw new Error('Cannot trade items with yourself.');
+    }
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new Error('Quantity must be a positive integer.');
+    }
+
+    const item = this.getItem(itemId);
+    if (!item) {
+      throw new Error('Unknown item id.');
+    }
+
+    return this.withLock(async () => {
+      const sender = this.players.get(fromUserId);
+      const recipient = this.players.get(toUserId);
+      if (!sender) {
+        throw new Error('The sender is not registered.');
+      }
+      if (!recipient) {
+        throw new Error('The recipient is not registered.');
+      }
+
+      const owned = sender.getItemQuantity(item.itemId);
+      if (owned < quantity) {
+        throw new Error('Not enough items to trade.');
+      }
+
+      sender.adjustItemQuantity(item.itemId, -quantity);
+      recipient.adjustItemQuantity(item.itemId, quantity);
+      await this.persist();
+      return { sender, recipient, item, quantity };
+    });
+  }
+
+  async giveItemToOozu({ userId, oozuIndex, itemId }) {
+    if (!Number.isInteger(oozuIndex) || oozuIndex < 0) {
+      throw new Error('That Oozu is not available.');
+    }
+
+    const item = this.getItem(itemId);
+    if (!item) {
+      throw new Error('Unknown item id.');
+    }
+
+    return this.withLock(async () => {
+      const profile = this.players.get(userId);
+      if (!profile) {
+        throw new Error('Player must register before giving items.');
+      }
+      if (oozuIndex >= profile.oozu.length) {
+        throw new Error('That Oozu is not available.');
+      }
+
+      const owned = profile.getItemQuantity(item.itemId);
+      if (owned <= 0) {
+        throw new Error('You do not have that item.');
+      }
+
+      const creature = profile.oozu[oozuIndex];
+      if (creature.heldItem === item.itemId) {
+        throw new Error('That Oozu is already holding that item.');
+      }
+      const previousItem = creature.heldItem;
+      profile.adjustItemQuantity(item.itemId, -1);
+      creature.heldItem = item.itemId;
+      if (previousItem && previousItem !== item.itemId) {
+        profile.adjustItemQuantity(previousItem, 1);
+      }
+      await this.persist();
+      return { profile, creature, item, previousItem };
+    });
+  }
+
+  async unequipItemFromOozu({ userId, oozuIndex }) {
+    if (!Number.isInteger(oozuIndex) || oozuIndex < 0) {
+      throw new Error('That Oozu is not available.');
+    }
+
+    return this.withLock(async () => {
+      const profile = this.players.get(userId);
+      if (!profile) {
+        throw new Error('Player must register before giving items.');
+      }
+      if (oozuIndex >= profile.oozu.length) {
+        throw new Error('That Oozu is not available.');
+      }
+
+      const creature = profile.oozu[oozuIndex];
+      const heldItem = creature.heldItem;
+      if (!heldItem) {
+        throw new Error('That Oozu is not holding an item.');
+      }
+
+      creature.heldItem = null;
+      profile.adjustItemQuantity(heldItem, 1);
+      await this.persist();
+      return { profile, creature, itemId: heldItem };
+    });
+  }
+
+  async registerPlayer({ userId, displayName, gender = null, pronoun = null, playerClass, starterTemplateId }) {
     return this.withLock(async () => {
       if (this.players.has(userId)) {
         throw new Error('Player is already registered.');
@@ -163,6 +442,8 @@ export class GameService {
       const profile = new PlayerProfile({
         userId,
         displayName,
+        gender,
+        pronoun,
         playerClass,
         currency: 100,
         oozu: [starter],

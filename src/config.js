@@ -24,6 +24,7 @@ export function loadSettings() {
     guildId,
     dataDir,
     templateFile: resolve(dataDir, 'oozu_templates.json'),
+    itemsFile: resolve(dataDir, 'items.json'),
     saveFile: resolve(dataDir, 'player_state.json')
   };
 }
