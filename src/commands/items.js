@@ -124,6 +124,34 @@ function truncate(text, limit = 90) {
   return text.length > limit ? `${text.slice(0, limit - 1)}…` : text;
 }
 
+function describeItemEffect(item) {
+  const effect = item?.effect;
+  if (!effect) {
+    return null;
+  }
+
+  switch (effect.type) {
+    case 'restore_hp':
+      return 'Fully restores an Oozu\'s HP.';
+    case 'restore_mp':
+      return 'Fully restores an Oozu\'s MP.';
+    case 'restore_stamina': {
+      const amount = Number.isFinite(effect.amount) ? Math.max(1, Math.floor(effect.amount)) : 1;
+      return amount === 1 ? 'Restores 1 stamina to the player.' : `Restores ${amount} stamina to the player.`;
+    }
+    default:
+      return null;
+  }
+}
+
+function requiresOozuTarget(item) {
+  if (!item?.effect) {
+    return false;
+  }
+  const target = typeof item.effect.target === 'string' ? item.effect.target : null;
+  return (target ?? 'oozu') !== 'player';
+}
+
 function buildEmptyOption(label) {
   return new StringSelectMenuOptionBuilder().setLabel(label).setValue('none').setDescription('Not available').setDefault(false);
 }
@@ -134,8 +162,18 @@ async function buildRootMenu(profile, game, { ownerId, avatarURL, notice, backAc
   const hasItems = inventoryEntries.length > 0;
   const hasOozu = profile.oozu.length > 0;
   const hasHeld = profile.oozu.some((creature) => creature.heldItem);
+  const hasConsumables = inventoryEntries.some((entry) => {
+    const item = game.getItem(entry.itemId);
+    return item && typeof item.isConsumable === 'function' && item.isConsumable() && entry.quantity > 0;
+  });
 
-  const row = new ActionRowBuilder().addComponents(
+  const primaryRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`items:view:${ownerId}:use`)
+      .setLabel('Use Item')
+      .setEmoji('🧪')
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(!hasConsumables),
     new ButtonBuilder()
       .setCustomId(`items:view:${ownerId}:give`)
       .setLabel('Give Item')
@@ -159,16 +197,20 @@ async function buildRootMenu(profile, game, { ownerId, avatarURL, notice, backAc
       .setLabel('Discard')
       .setEmoji('🗑️')
       .setStyle(ButtonStyle.Danger)
-      .setDisabled(!hasItems),
+      .setDisabled(!hasItems)
+  );
+
+  const refreshRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`items:menu:${ownerId}:refresh`)
       .setLabel('Refresh')
       .setEmoji('🔄')
       .setStyle(ButtonStyle.Secondary)
   );
-  const rows = [row];
+
+  const rows = [primaryRow, refreshRow];
   if (backAction) {
-      rows.push(
+    rows.push(
       new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(backAction)
@@ -534,6 +576,154 @@ async function buildDiscardMenu(session, profile, game, { ownerId, avatarURL, no
   };
 }
 
+async function buildUseMenu(session, profile, game, { ownerId, avatarURL, notice, backAction } = {}) {
+  const { summary, heldEmbeds, attachments } = await buildItemsSummary(profile, game, { avatarURL });
+  summary.setDescription('Select a consumable to use. Items are consumed immediately after confirmation.');
+
+  const inventoryEntries = profile.inventoryEntries();
+  const consumables = inventoryEntries
+    .map((entry) => {
+      const item = game.getItem(entry.itemId);
+      if (!item || typeof item.isConsumable !== 'function' || !item.isConsumable()) {
+        return null;
+      }
+      return { item, quantity: entry.quantity };
+    })
+    .filter(Boolean);
+
+  let selectedItem = session.selectedItemId ? game.getItem(session.selectedItemId) : null;
+  if (!selectedItem || typeof selectedItem.isConsumable !== 'function' || !selectedItem.isConsumable()) {
+    selectedItem = null;
+  }
+
+  const itemOptions =
+    consumables.length > 0
+      ? consumables.map(({ item, quantity }) => {
+          const effectText = describeItemEffect(item);
+          const description = effectText ? `${effectText} (You own ${quantity})` : `You own ${quantity}`;
+          return new StringSelectMenuOptionBuilder()
+            .setLabel(item?.name ?? item.itemId)
+            .setDescription(truncate(description))
+            .setValue(item.itemId)
+            .setDefault(selectedItem?.itemId === item.itemId);
+        })
+      : [buildEmptyOption('No usable items available')];
+
+  const itemSelect = new StringSelectMenuBuilder()
+    .setCustomId(`items:select:${ownerId}:use:item`)
+    .setPlaceholder('Choose an item to use')
+    .setMinValues(1)
+    .setMaxValues(1)
+    .setDisabled(consumables.length === 0)
+    .addOptions(itemOptions);
+
+  const requiresTarget = selectedItem ? requiresOozuTarget(selectedItem) : false;
+  const anyRequiresTarget = consumables.some(({ item }) => requiresOozuTarget(item));
+
+  const oozuOptions =
+    profile.oozu.length > 0
+      ? profile.oozu.map((creature, idx) => {
+          const template = game.getTemplate(creature.templateId);
+          let description = 'No template data available.';
+          if (template) {
+            const maxHp = Math.max(0, Math.floor(game.calculateHp(template, creature.level)));
+            const maxMp = Math.max(0, Math.floor(game.calculateMp(template, creature.level)));
+            const currentHp = Math.max(
+              0,
+              Math.min(Number.isFinite(creature.currentHp) ? Math.floor(creature.currentHp) : maxHp, maxHp)
+            );
+            const currentMp = Math.max(
+              0,
+              Math.min(Number.isFinite(creature.currentMp) ? Math.floor(creature.currentMp) : maxMp, maxMp)
+            );
+            description = `HP ${currentHp}/${maxHp} • MP ${currentMp}/${maxMp}`;
+          }
+          return new StringSelectMenuOptionBuilder()
+            .setLabel(creature.nickname)
+            .setDescription(truncate(description))
+            .setValue(String(idx))
+            .setDefault(session.selectedOozuIndex === idx);
+        })
+      : [buildEmptyOption('No Oozu available')];
+
+  const canSelectOozu = requiresTarget && profile.oozu.length > 0;
+
+  const oozuSelect = new StringSelectMenuBuilder()
+    .setCustomId(`items:select:${ownerId}:use:oozu`)
+    .setPlaceholder('Choose an Oozu')
+    .setMinValues(1)
+    .setMaxValues(1)
+    .setDisabled(!canSelectOozu)
+    .addOptions(oozuOptions);
+
+  const confirmDisabled =
+    !selectedItem || (requiresTarget && (!Number.isInteger(session.selectedOozuIndex) || session.selectedOozuIndex < 0));
+
+  const actionsRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`items:action:${ownerId}:use`)
+      .setLabel('Use Item')
+      .setStyle(ButtonStyle.Success)
+      .setDisabled(confirmDisabled),
+    new ButtonBuilder()
+      .setCustomId(`items:view:${ownerId}:root`)
+      .setLabel('Cancel')
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  const files = [...attachments];
+  const embeds = [summary, ...heldEmbeds];
+  if (selectedItem) {
+    const preview = new EmbedBuilder()
+      .setColor(0x6c5ce7)
+      .setTitle(selectedItem.name)
+      .setDescription(selectedItem.description ?? 'No description provided.');
+    const effectText = describeItemEffect(selectedItem);
+    if (effectText) {
+      preview.addFields({ name: 'Effect', value: effectText, inline: false });
+    }
+    const quantityOwned = profile.getItemQuantity(selectedItem.itemId);
+    preview.addFields({ name: 'Quantity', value: `You own ${quantityOwned}`, inline: true });
+
+    if (requiresTarget && Number.isInteger(session.selectedOozuIndex) && session.selectedOozuIndex >= 0) {
+      const creature = profile.oozu[session.selectedOozuIndex];
+      if (creature) {
+        preview.addFields({ name: 'Target', value: creature.nickname, inline: true });
+      }
+    }
+
+    if (selectedItem.sprite) {
+      const sessionId = randomUUID();
+      try {
+        const { attachment, fileName } = await createSpriteAttachment(selectedItem.sprite, {
+          targetWidth: 96,
+          variant: `item_${sessionId}`
+        });
+        files.push(attachment);
+        preview.setThumbnail(`attachment://${fileName}`);
+      } catch (err) {
+        /* ignore sprite loading errors */
+      }
+    }
+
+    embeds.push(preview);
+  }
+
+  const components = [new ActionRowBuilder().addComponents(itemSelect)];
+  if (anyRequiresTarget) {
+    components.push(new ActionRowBuilder().addComponents(oozuSelect));
+  }
+  components.push(actionsRow);
+
+  return {
+    content: resolveContent(notice),
+    embeds,
+    components,
+    files,
+    attachments: []
+  };
+}
+
 async function buildViewForSession(session, profile, game, context = {}) {
   if (session.view === 'give') {
     return buildGiveMenu(session, profile, game, context);
@@ -546,6 +736,9 @@ async function buildViewForSession(session, profile, game, context = {}) {
   }
   if (session.view === 'discard') {
     return buildDiscardMenu(session, profile, game, context);
+  }
+  if (session.view === 'use') {
+    return buildUseMenu(session, profile, game, context);
   }
   return buildRootMenu(profile, game, context);
 }
@@ -682,6 +875,16 @@ export const itemsCommand = {
         } else if (detail === 'quantity') {
           session.discardQuantity = Number.parseInt(interaction.values[0], 10);
         }
+      } else if (action === 'use') {
+        if (detail === 'item') {
+          session.selectedItemId = interaction.values[0];
+          const selected = game.getItem(session.selectedItemId);
+          if (!requiresOozuTarget(selected)) {
+            session.selectedOozuIndex = null;
+          }
+        } else if (detail === 'oozu') {
+          session.selectedOozuIndex = Number.parseInt(interaction.values[0], 10);
+        }
       }
 
       const response = await buildViewForSession(session, profile, game, {
@@ -695,6 +898,50 @@ export const itemsCommand = {
 
     if (scope === 'action') {
       try {
+        if (action === 'use') {
+          if (!session.selectedItemId) {
+            throw new Error('Choose an item to use.');
+          }
+          const selectedItem = game.getItem(session.selectedItemId);
+          if (!selectedItem || typeof selectedItem.isConsumable !== 'function' || !selectedItem.isConsumable()) {
+            throw new Error('That item cannot be used.');
+          }
+          const needsTarget = requiresOozuTarget(selectedItem);
+          if (needsTarget && (!Number.isInteger(session.selectedOozuIndex) || session.selectedOozuIndex < 0)) {
+            throw new Error('Choose an Oozu for that item.');
+          }
+
+          const result = await game.useItem({
+            userId: ownerId,
+            itemId: selectedItem.itemId,
+            oozuIndex: needsTarget ? session.selectedOozuIndex : null
+          });
+
+          const updatedProfile = game.getPlayer(ownerId);
+          let notice;
+          if (result.type === 'restore_hp' && result.creature) {
+            const currentHp = Number.isFinite(result.creature.currentHp) ? result.creature.currentHp : result.max;
+            notice = `Used **${selectedItem.name}** on ${result.creature.nickname}. HP is now ${currentHp}/${result.max}.`;
+          } else if (result.type === 'restore_mp' && result.creature) {
+            const currentMp = Number.isFinite(result.creature.currentMp) ? result.creature.currentMp : result.max;
+            notice = `Used **${selectedItem.name}** on ${result.creature.nickname}. MP is now ${currentMp}/${result.max}.`;
+          } else if (result.type === 'restore_stamina') {
+            notice = `Drank **${selectedItem.name}** and restored ${result.restored} stamina (${result.profile.stamina}/${result.max}).`;
+          } else {
+            notice = `Used **${selectedItem.name}**.`;
+          }
+
+          changeView(session, 'root');
+          const response = await buildRootMenu(updatedProfile ?? profile, game, {
+            ownerId,
+            avatarURL,
+            notice,
+            backAction: session.backAction
+          });
+          await interaction.update(response);
+          return;
+        }
+
         if (action === 'give') {
           if (!session.selectedItemId || !Number.isInteger(session.selectedOozuIndex) || session.selectedOozuIndex < 0) {
             throw new Error('Select an item and an Oozu before confirming.');

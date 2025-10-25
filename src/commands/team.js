@@ -416,11 +416,13 @@ export async function buildStatSheet(profile, creature, template, { index, owner
   }
 
   const sessionId = randomUUID();
-  const hp = game.calculateHp(template, creature.level);
-  const attack = game.calculateAttack(template, creature.level);
-  const defense = game.calculateDefense(template, creature.level);
-  const mp = game.calculateMp(template, creature.level);
-  const experience = creature.experience ?? 0;
+  const maxHp = Math.max(0, Math.floor(game.calculateHp(template, creature.level)));
+  const maxMp = Math.max(0, Math.floor(game.calculateMp(template, creature.level)));
+  const attack = Math.floor(game.calculateAttack(template, creature.level));
+  const defense = Math.floor(game.calculateDefense(template, creature.level));
+  const currentHp = Math.max(0, Math.min(Number.isFinite(creature.currentHp) ? Math.floor(creature.currentHp) : maxHp, maxHp));
+  const currentMp = Math.max(0, Math.min(Number.isFinite(creature.currentMp) ? Math.floor(creature.currentMp) : maxMp, maxMp));
+  const experience = Math.max(0, Math.floor(creature.experience ?? 0));
 
   const { attachment: iconAttachment, fileName: iconFile } = await createSpriteAttachment(template.sprite, {
     targetWidth: SMALL_ICON_WIDTH,
@@ -449,10 +451,10 @@ export async function buildStatSheet(profile, creature, template, { index, owner
       { name: 'Player', value: profile.displayName, inline: true },
       { name: 'Element', value: template.element, inline: true },
       { name: 'Tier', value: template.tier, inline: true },
-      { name: 'HP', value: String(hp), inline: true },
+      { name: 'HP', value: `${currentHp}/${maxHp}`, inline: true },
       { name: 'Attack', value: String(attack), inline: true },
       { name: 'Defense', value: String(defense), inline: true },
-      { name: 'MP', value: String(mp), inline: true },
+      { name: 'MP', value: `${currentMp}/${maxMp}`, inline: true },
       { name: 'Experience', value: String(experience), inline: true },
       { name: 'Item', value: renderHeldItem(game, creature), inline: true },
       { name: 'Moves', value: movesText, inline: false }

@@ -9,11 +9,18 @@ export class Move {
 }
 
 export class ItemTemplate {
-  constructor({ itemId, name, description, type = 'general' }) {
+  constructor({ itemId, name, description, type = 'General', sprite = null, effect = null }) {
     this.itemId = String(itemId);
     this.name = name;
     this.description = description ?? '';
-    this.type = type;
+    const normalizedType = typeof type === 'string' && type.trim() ? type : 'General';
+    this.type = normalizedType;
+    this.sprite = sprite ? String(sprite) : null;
+    this.effect = effect && typeof effect === 'object' ? { ...effect } : null;
+  }
+
+  isConsumable() {
+    return typeof this.type === 'string' && this.type.toLowerCase() === 'consumable';
   }
 }
 
@@ -46,12 +53,14 @@ export class OozuTemplate {
 }
 
 export class PlayerOozu {
-  constructor({ templateId, nickname, level = 1, experience = 0, heldItem = null }) {
+  constructor({ templateId, nickname, level = 1, experience = 0, heldItem = null, currentHp = null, currentMp = null }) {
     this.templateId = String(templateId);
     this.nickname = String(nickname);
     this.level = Number(level);
     this.experience = Number(experience);
     this.heldItem = heldItem ? String(heldItem) : null;
+    this.currentHp = Number.isFinite(currentHp) ? Number(currentHp) : null;
+    this.currentMp = Number.isFinite(currentMp) ? Number(currentMp) : null;
   }
 }
 

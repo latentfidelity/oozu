@@ -372,3 +372,107 @@ describe('GameService inventory management', () => {
     ).rejects.toThrow('Provide a valid image URL using http or https.');
   });
 });
+
+describe('GameService item usage', () => {
+  let game;
+
+  beforeEach(async () => {
+    const storeStub = {
+      loadPlayers: async () => new Map(),
+      savePlayers: async () => {}
+    };
+
+    game = new GameService({
+      store: storeStub,
+      templateFile: resolve(__dirname, '../data/oozu_templates.json'),
+      itemsFile: resolve(__dirname, '../data/items.json')
+    });
+
+    await game.initialize();
+    await game.registerPlayer({
+      userId: 'usage-user',
+      displayName: 'Sampler',
+      gender: 'Other',
+      pronoun: 'they',
+      playerClass: 'Alchemist',
+      starterTemplateId: 'water_oozu'
+    });
+  });
+
+  it('restores HP when using an HP Potion', async () => {
+    await game.addItemToInventory('usage-user', 'hp_potion', 1);
+    const profile = game.getPlayer('usage-user');
+    expect(profile).not.toBeNull();
+    if (!profile) {
+      return;
+    }
+
+    const creature = profile.oozu[0];
+    const template = game.getTemplate(creature.templateId);
+    expect(template).not.toBeNull();
+    if (!template) {
+      return;
+    }
+
+    const maxHp = Math.max(0, Math.floor(game.calculateHp(template, creature.level)));
+    creature.currentHp = Math.max(0, maxHp - 10);
+
+    const result = await game.useItem({ userId: 'usage-user', itemId: 'hp_potion', oozuIndex: 0 });
+    expect(result.creature.currentHp).toBe(maxHp);
+    expect(result.restored).toBeGreaterThan(0);
+    expect(game.getPlayer('usage-user')?.getItemQuantity('hp_potion')).toBe(0);
+  });
+
+  it('restores MP when using an MP Potion', async () => {
+    await game.addItemToInventory('usage-user', 'mp_potion', 1);
+    const profile = game.getPlayer('usage-user');
+    expect(profile).not.toBeNull();
+    if (!profile) {
+      return;
+    }
+
+    const creature = profile.oozu[0];
+    const template = game.getTemplate(creature.templateId);
+    expect(template).not.toBeNull();
+    if (!template) {
+      return;
+    }
+
+    const maxMp = Math.max(0, Math.floor(game.calculateMp(template, creature.level)));
+    creature.currentMp = Math.max(0, maxMp - 5);
+
+    const result = await game.useItem({ userId: 'usage-user', itemId: 'mp_potion', oozuIndex: 0 });
+    expect(result.creature.currentMp).toBe(maxMp);
+    expect(result.restored).toBeGreaterThan(0);
+    expect(game.getPlayer('usage-user')?.getItemQuantity('mp_potion')).toBe(0);
+  });
+
+  it('restores stamina when using a Stamina Potion', async () => {
+    await game.addItemToInventory('usage-user', 'stamina_potion', 1);
+    const profile = game.getPlayer('usage-user');
+    expect(profile).not.toBeNull();
+    if (!profile) {
+      return;
+    }
+
+    profile.stamina = Math.max(0, profile.stamina - 1);
+    const result = await game.useItem({ userId: 'usage-user', itemId: 'stamina_potion' });
+    expect(result.profile.stamina).toBe(profile.maxStamina);
+    expect(result.restored).toBe(1);
+    expect(game.getPlayer('usage-user')?.getItemQuantity('stamina_potion')).toBe(0);
+  });
+
+  it('prevents using HP Potion when HP is full', async () => {
+    await game.addItemToInventory('usage-user', 'hp_potion', 1);
+    await expect(game.useItem({ userId: 'usage-user', itemId: 'hp_potion', oozuIndex: 0 })).rejects.toThrow(
+      'is already at full HP.'
+    );
+  });
+
+  it('prevents using Stamina Potion when stamina is full', async () => {
+    await game.addItemToInventory('usage-user', 'stamina_potion', 1);
+    await expect(game.useItem({ userId: 'usage-user', itemId: 'stamina_potion' })).rejects.toThrow(
+      'Your stamina is already full.'
+    );
+  });
+});

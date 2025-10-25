@@ -1,9 +1,43 @@
 [
   {
+    "item_id": "hp_potion",
+    "name": "HP Potion",
+    "description": "Restores an Oozu's HP to full.",
+    "type": "Consumable",
+    "sprite": "sprites/items/potion_h.png",
+    "effect": {
+      "type": "restore_hp",
+      "target": "oozu"
+    }
+  },
+  {
+    "item_id": "mp_potion",
+    "name": "MP Potion",
+    "description": "Refills an Oozu's MP reserve.",
+    "type": "Consumable",
+    "sprite": "sprites/items/potion_m.png",
+    "effect": {
+      "type": "restore_mp",
+      "target": "oozu"
+    }
+  },
+  {
+    "item_id": "stamina_potion",
+    "name": "Stamina Potion",
+    "description": "Restores one point of player stamina.",
+    "type": "Consumable",
+    "sprite": "sprites/items/potion_s.png",
+    "effect": {
+      "type": "restore_stamina",
+      "target": "player",
+      "amount": 1
+    }
+  },
+  {
     "item_id": "healing_orb",
     "name": "Healing Orb",
     "description": "A restorative sphere that Oozu like to hold.",
-    "type": "consumable"
+    "type": "Consumable"
   },
   {
     "item_id": "power_charm",

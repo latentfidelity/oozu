@@ -24,9 +24,12 @@ export class GameService {
   }
 
   async initialize() {
-    this.players = await this.store.loadPlayers();
     this.templates = await this.loadTemplatesFromFile();
     this.items = await this.loadItemsFromFile();
+    this.players = await this.store.loadPlayers();
+    for (const profile of this.players.values()) {
+      this.normalizeProfileVitals(profile);
+    }
   }
 
   async withLock(fn) {
@@ -120,11 +123,14 @@ export class GameService {
       if (!itemId) {
         continue;
       }
+      const itemType = typeof entry.type === 'string' && entry.type.trim() ? entry.type : 'General';
       const item = new ItemTemplate({
         itemId,
         name: entry.name,
         description: entry.description,
-        type: entry.type ?? 'general'
+        type: itemType,
+        sprite: entry.sprite ?? null,
+        effect: entry.effect ?? null
       });
       const key = String(item.itemId);
       result.set(key, item);
@@ -225,7 +231,11 @@ export class GameService {
   }
 
   getPlayer(userId) {
-    return this.players.get(userId) ?? null;
+    const profile = this.players.get(userId) ?? null;
+    if (profile) {
+      this.normalizeProfileVitals(profile);
+    }
+    return profile;
   }
 
   listPlayerOozu(userId) {
@@ -233,6 +243,7 @@ export class GameService {
     if (!profile) {
       return [];
     }
+    this.normalizeProfileVitals(profile);
     return [...profile.oozu];
   }
 
@@ -287,6 +298,109 @@ export class GameService {
       profile.adjustItemQuantity(item.itemId, -quantity);
       await this.persist();
       return { profile, item, remaining: profile.getItemQuantity(item.itemId) };
+    });
+  }
+
+  async useItem({ userId, itemId, oozuIndex = null }) {
+    const item = this.getItem(itemId);
+    if (!item) {
+      throw new Error('Unknown item id.');
+    }
+    if (!item.isConsumable() || !item.effect) {
+      throw new Error('That item cannot be used.');
+    }
+
+    return this.withLock(async () => {
+      const profile = this.players.get(userId);
+      if (!profile) {
+        throw new Error('Player must register before using items.');
+      }
+
+      const owned = profile.getItemQuantity(item.itemId);
+      if (owned <= 0) {
+        throw new Error('You do not have that item.');
+      }
+
+      const effect = item.effect ?? {};
+      const effectType = typeof effect.type === 'string' ? effect.type : null;
+      const target = typeof effect.target === 'string' ? effect.target : null;
+
+      if (!effectType) {
+        throw new Error('That item has no effect.');
+      }
+
+      let result;
+
+      if (effectType === 'restore_hp') {
+        if (!Number.isInteger(oozuIndex) || oozuIndex < 0) {
+          throw new Error('Choose an Oozu to use that item on.');
+        }
+        if (oozuIndex >= profile.oozu.length) {
+          throw new Error('That Oozu is not available.');
+        }
+
+        const creature = profile.oozu[oozuIndex];
+        const template = this.getTemplate(creature.templateId);
+        if (!template) {
+          throw new Error('Template data missing for that Oozu.');
+        }
+
+        this.normalizeCreatureVitals(creature, template);
+        const maxHp = Math.max(0, Math.floor(this.calculateHp(template, creature.level)));
+        const current = Number.isFinite(creature.currentHp) ? creature.currentHp : maxHp;
+        const restored = Math.max(0, maxHp - current);
+        if (restored <= 0) {
+          throw new Error(`${creature.nickname} is already at full HP.`);
+        }
+
+        creature.currentHp = maxHp;
+        profile.adjustItemQuantity(item.itemId, -1);
+        await this.persist();
+        result = { profile, item, creature, restored, max: maxHp, type: effectType, target: target ?? 'oozu' };
+      } else if (effectType === 'restore_mp') {
+        if (!Number.isInteger(oozuIndex) || oozuIndex < 0) {
+          throw new Error('Choose an Oozu to use that item on.');
+        }
+        if (oozuIndex >= profile.oozu.length) {
+          throw new Error('That Oozu is not available.');
+        }
+
+        const creature = profile.oozu[oozuIndex];
+        const template = this.getTemplate(creature.templateId);
+        if (!template) {
+          throw new Error('Template data missing for that Oozu.');
+        }
+
+        this.normalizeCreatureVitals(creature, template);
+        const maxMp = Math.max(0, Math.floor(this.calculateMp(template, creature.level)));
+        const current = Number.isFinite(creature.currentMp) ? creature.currentMp : maxMp;
+        const restored = Math.max(0, maxMp - current);
+        if (restored <= 0) {
+          throw new Error(`${creature.nickname} already has full MP.`);
+        }
+
+        creature.currentMp = maxMp;
+        profile.adjustItemQuantity(item.itemId, -1);
+        await this.persist();
+        result = { profile, item, creature, restored, max: maxMp, type: effectType, target: target ?? 'oozu' };
+      } else if (effectType === 'restore_stamina') {
+        const amount = Number.isFinite(effect.amount) ? Math.max(1, Math.floor(effect.amount)) : 1;
+        const maxStamina = profile.maxStamina;
+        const current = Math.max(0, Math.floor(profile.stamina));
+        const capacity = Math.max(0, maxStamina - current);
+        if (capacity <= 0) {
+          throw new Error('Your stamina is already full.');
+        }
+        const restored = Math.min(capacity, amount);
+        profile.stamina = Math.min(maxStamina, current + restored);
+        profile.adjustItemQuantity(item.itemId, -1);
+        await this.persist();
+        result = { profile, item, restored, max: maxStamina, type: effectType, target: target ?? 'player' };
+      } else {
+        throw new Error('That item effect is not supported yet.');
+      }
+
+      return result;
     });
   }
 
@@ -439,6 +553,8 @@ export class GameService {
         level: 1
       });
 
+      this.normalizeCreatureVitals(starter, template);
+
       const profile = new PlayerProfile({
         userId,
         displayName,
@@ -475,6 +591,8 @@ export class GameService {
         nickname: finalNickname,
         level: 1
       });
+
+      this.normalizeCreatureVitals(creature, template);
 
       profile.oozu.push(creature);
       await this.persist();
@@ -661,6 +779,33 @@ export class GameService {
     const baseDefense = Number.isFinite(template.baseDefense) ? template.baseDefense : 0;
     const mp = baseAttack + Math.floor(baseDefense / 2) + level * 3;
     return Math.max(0, mp);
+  }
+
+  normalizeCreatureVitals(creature, template) {
+    if (!template) {
+      return;
+    }
+    const maxHp = Math.max(0, Math.floor(this.calculateHp(template, creature.level)));
+    const maxMp = Math.max(0, Math.floor(this.calculateMp(template, creature.level)));
+
+    const rawHp = Number.isFinite(creature.currentHp) ? Math.floor(creature.currentHp) : maxHp;
+    const rawMp = Number.isFinite(creature.currentMp) ? Math.floor(creature.currentMp) : maxMp;
+
+    creature.currentHp = Math.max(0, Math.min(rawHp, maxHp));
+    creature.currentMp = Math.max(0, Math.min(rawMp, maxMp));
+  }
+
+  normalizeProfileVitals(profile) {
+    if (!profile) {
+      return;
+    }
+    for (const creature of profile.oozu) {
+      const template = this.getTemplate(creature.templateId);
+      if (!template) {
+        continue;
+      }
+      this.normalizeCreatureVitals(creature, template);
+    }
   }
 
   damage(attack, defense) {

@@ -39,7 +39,9 @@ export class JsonStore {
               nickname: creature.nickname,
               level: creature.level ?? 1,
               experience: creature.experience ?? 0,
-              heldItem: creature.held_item ?? creature.heldItem ?? null
+              heldItem: creature.held_item ?? creature.heldItem ?? null,
+              currentHp: creature.current_hp ?? creature.currentHp ?? null,
+              currentMp: creature.current_mp ?? creature.currentMp ?? null
             })
         ) ?? [];
 
@@ -84,7 +86,9 @@ export class JsonStore {
           nickname: creature.nickname,
           level: creature.level,
           experience: creature.experience,
-          held_item: creature.heldItem
+          held_item: creature.heldItem,
+          current_hp: creature.currentHp,
+          current_mp: creature.currentMp
         })),
         player_class: profile.playerClass,
         inventory: Object.fromEntries(profile.inventory.entries()),
