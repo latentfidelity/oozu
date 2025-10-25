@@ -656,6 +656,13 @@ export class GameService {
     return template.baseDefense + level;
   }
 
+  calculateMp(template, level) {
+    const baseAttack = Number.isFinite(template.baseAttack) ? template.baseAttack : 0;
+    const baseDefense = Number.isFinite(template.baseDefense) ? template.baseDefense : 0;
+    const mp = baseAttack + Math.floor(baseDefense / 2) + level * 3;
+    return Math.max(0, mp);
+  }
+
   damage(attack, defense) {
     const variance = randomInt(-2, 5); // upper bound exclusive
     const raw = attack - Math.floor(defense / 2) + variance;

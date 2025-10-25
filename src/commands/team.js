@@ -181,21 +181,30 @@ export const teamCommand = {
     }
 
     try {
+      await interaction.deferUpdate();
+    } catch (err) {
+      console.error('Failed to defer stat sheet update', err);
+      return;
+    }
+
+    try {
       const response = await buildStatSheet(profile, creature, template, {
         index,
-        ownerId
+        ownerId,
+        game
       });
       console.log('[team] component built sheet', interaction.id);
-      await interaction.update(response);
+      await interaction.editReply({ ...response, attachments: [] });
       console.log('[team] component updated reply', interaction.id);
     } catch (err) {
       console.error('Failed to build stat sheet', err);
       const summary = await buildTeamSummary(profile, game, {
         avatarURL: interaction.user.displayAvatarURL?.() ?? interaction.user.avatarURL?.()
       });
-      await interaction.update({
+      await interaction.editReply({
         ...summary,
-        content: 'Something went wrong while rendering that stat sheet. Please try again later.'
+        content: 'Something went wrong while rendering that stat sheet. Please try again later.',
+        attachments: []
       });
     }
   }
@@ -276,7 +285,7 @@ teamCommand.handleModal = async function handleTeamModal(interaction, { game }) 
     if (!template) {
       throw new Error('Template data missing—try again later.');
     }
-    const response = await buildStatSheet(profile, creature, template, { index, ownerId });
+    const response = await buildStatSheet(profile, creature, template, { index, ownerId, game });
     if (interaction.message) {
       await interaction.message.edit(response);
     }
@@ -397,12 +406,21 @@ export async function buildTeamSummary(profile, game, { avatarURL } = {}) {
   };
 }
 
-export async function buildStatSheet(profile, creature, template, { index, ownerId } = {}) {
+export async function buildStatSheet(profile, creature, template, { index, ownerId, game } = {}) {
   if (!Number.isInteger(index) || index < 0) {
     throw new Error('Missing Oozu index for stat sheet rendering.');
   }
 
+  if (!game) {
+    throw new Error('Missing game context for stat sheet rendering.');
+  }
+
   const sessionId = randomUUID();
+  const hp = game.calculateHp(template, creature.level);
+  const attack = game.calculateAttack(template, creature.level);
+  const defense = game.calculateDefense(template, creature.level);
+  const mp = game.calculateMp(template, creature.level);
+  const experience = creature.experience ?? 0;
 
   const { attachment: iconAttachment, fileName: iconFile } = await createSpriteAttachment(template.sprite, {
     targetWidth: SMALL_ICON_WIDTH,
@@ -431,6 +449,11 @@ export async function buildStatSheet(profile, creature, template, { index, owner
       { name: 'Player', value: profile.displayName, inline: true },
       { name: 'Element', value: template.element, inline: true },
       { name: 'Tier', value: template.tier, inline: true },
+      { name: 'HP', value: String(hp), inline: true },
+      { name: 'Attack', value: String(attack), inline: true },
+      { name: 'Defense', value: String(defense), inline: true },
+      { name: 'MP', value: String(mp), inline: true },
+      { name: 'Experience', value: String(experience), inline: true },
       { name: 'Item', value: renderHeldItem(game, creature), inline: true },
       { name: 'Moves', value: movesText, inline: false }
     )
